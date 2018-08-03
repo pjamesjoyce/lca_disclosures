@@ -1,29 +1,9 @@
 import brightway2 as bw
-import numpy as np
-from scipy.sparse import coo_matrix
-import json
-import os
 
-def reconstruct_matrix(matrix_dict, normalise=False, clear_diagonal=False):
-    m = np.zeros(matrix_dict['shape'])
-    for (r, c), v in matrix_dict['data']:
-        m[r, c] = v
-    
-    if normalise and sum(m.diagonal()) != 0:
-        m = -m/m.diagonal()
-        
-        if clear_diagonal:
-            m = m + np.eye(matrix_dict['shape'][0])
-        
-    return m
+from ..base.exporter import BaseExporter
+from ..utils import matrix_to_coo, reconstruct_matrix
 
-def matrix_to_coo(m):
-    m_coo = coo_matrix(m)
-    return [[[int(m_coo.row[i]), int(m_coo.col[i])], float(m_coo.data[i])] for i, _ in enumerate(m_coo.data)]
-
-
-
-class DisclosureExporter(object):
+class DisclosureExporter(BaseExporter):
 
     def __init__(self, project_name, database_name, fu=None,folder_path=None, filename=None):
 
@@ -33,8 +13,17 @@ class DisclosureExporter(object):
         self.folder_path = folder_path
         self.filename = filename
 
-        self.efn = None
+        self.efn = self._prepare_efn()
         self.data = self._prepare_disclosure()
+
+    def _prepare_efn(self):
+
+        if isinstance(self.filename, str):
+            efn = self.filename
+        else:
+            efn = '{}_{}.json'.format(self.project_name.replace(" ", "_"), self.database_name.replace(" ", "_"))
+
+        return efn
 
     def _prepare_disclosure(self):
 
@@ -142,7 +131,7 @@ class DisclosureExporter(object):
         
                     
         return data
-
+"""
     def write(self):
 
         if isinstance(self.filename, str):
@@ -163,3 +152,4 @@ class DisclosureExporter(object):
             json.dump(self.data, f)
 
         return efn
+"""
