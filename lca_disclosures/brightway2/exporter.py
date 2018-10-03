@@ -5,7 +5,7 @@ from ..utils import matrix_to_coo, reconstruct_matrix
 
 class DisclosureExporter(BaseExporter):
 
-    def __init__(self, project_name, database_name, fu=None,folder_path=None, filename=None):
+    def __init__(self, project_name, database_name, fu=None, folder_path=None, filename=None):
 
         self.project_name = project_name
         self.database_name = database_name
@@ -13,8 +13,8 @@ class DisclosureExporter(BaseExporter):
         self.folder_path = folder_path
         self.filename = filename
 
-        self.efn = self._prepare_efn()
-        self.data = self._prepare_disclosure()
+        # self.efn = self._prepare_efn()
+        # self.data = self._prepare_disclosure()
 
     def _prepare_efn(self):
 
@@ -108,18 +108,20 @@ class DisclosureExporter(BaseExporter):
                         for i, x in enumerate(foreground)
                         ]
         
-        techno_matrix = {'data':techno_coords, 'shape':(len(technosphere),len(foreground))}
-        bio_matrix = {'data':bio_coords, 'shape':(len(biosphere),len(foreground))}
+        # techno_matrix = {'data':techno_coords, 'shape':(len(technosphere),len(foreground))}
+        # bio_matrix = {'data':bio_coords, 'shape':(len(biosphere),len(foreground))}
         
         unprocessed_foreground_matrix = {'data':foreground_coords, 'shape':(len(foreground), len(foreground))}
         processed_matrix = reconstruct_matrix(unprocessed_foreground_matrix, normalise=True,  clear_diagonal=True)
         
-      
-        
         foreground_coords = matrix_to_coo(processed_matrix)
-        foreground_matrix = {'data':foreground_coords, 'shape':(len(foreground), len(foreground))}
-        
-        
+        # foreground_matrix = {'data':foreground_coords, 'shape':(len(foreground), len(foreground))}
+
+        return foreground_names, technosphere_names, biosphere_names, foreground_coords, techno_coords, bio_coords
+
+
+
+"""
         data = {
             'foreground flows':foreground_names,
             'Af':foreground_matrix,
@@ -131,7 +133,6 @@ class DisclosureExporter(BaseExporter):
         
                     
         return data
-"""
     def write(self):
 
         if isinstance(self.filename, str):

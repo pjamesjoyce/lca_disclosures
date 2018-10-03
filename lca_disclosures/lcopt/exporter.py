@@ -3,6 +3,7 @@ from ..utils import matrix_to_coo
 
 import numpy as np
 
+
 def specify_matrix(model, ps_id):
     
     eps = model.evaluated_parameter_sets
@@ -21,6 +22,7 @@ def specify_matrix(model, ps_id):
 
     return matrix
 
+
 class LcoptDisclosureExporter(BaseExporter):
 
     def __init__(self, model, parameter_set=None, folder_path=None, filename=None):
@@ -31,12 +33,12 @@ class LcoptDisclosureExporter(BaseExporter):
         self.folder_path = folder_path
         self.filename = filename
 
-        self.efn = self._prepare_efn()
-        self.data = self._prepare_disclosure()
+        # self.efn = self._prepare_efn()
+        # self.data = self._prepare_disclosure()
 
     def _prepare_efn(self):
 
-        if isinstance(self.filename, str):
+        if hasattr(self, 'filename'):
             efn = self.filename
         else:
             if self.parameter_set is None:
@@ -45,7 +47,6 @@ class LcoptDisclosureExporter(BaseExporter):
                 efn = '{}_ps_{}.json'.format(self.model.name.replace(" ", "_"), self.parameter_set)
 
         return efn
-
 
     def _prepare_disclosure(self):
         
@@ -63,7 +64,7 @@ class LcoptDisclosureExporter(BaseExporter):
         foreground = sorted(list(set(foreground) - set(unused))) # get rid of unused items
         foreground = fu + [x for x in foreground if x not in fu] # set fu to be the first item in the foreground matrix
         
-        #split background into technosphere and biosphere portions
+        # split background into technosphere and biosphere portions
         technosphere = [x for x in background if self.model.database['items'][self.model.get_exchange(x[1])]['lcopt_type'] == "input"]
         biosphere = [x for x in background if self.model.database['items'][self.model.get_exchange(x[1])]['lcopt_type'] == "biosphere"]
         
@@ -72,7 +73,6 @@ class LcoptDisclosureExporter(BaseExporter):
         Af_shape = (l,l)
         Af = np.zeros(Af_shape)
 
-        
         for i, c in enumerate(foreground):
             c_lookup = c[0]
             for j, r in enumerate(foreground):
@@ -126,15 +126,6 @@ class LcoptDisclosureExporter(BaseExporter):
         foreground_names = [{'index':i,'name': x[1], 'unit':foreground_info[i]['unit'], 'location':foreground_info[i]['location']} for i, x in enumerate(foreground)]
         technosphere_names = [{'index':i, 'ecoinvent_name': technosphere_info[i].get('name', 'n/a'), 'ecoinvent_id':technosphere_info[i].get('activity', 'n/a'), 'brightway_id':technosphere_links[i], 'unit':technosphere_info[i].get('unit', 'n/a'), 'location':technosphere_info[i].get('location', 'n/a')} for i, x in enumerate(technosphere)]
         biosphere_names = [{'index':i, 'name':"{}, {}, {}".format(biosphere_ids[i]['name'], biosphere_ids[i]['type'],  ",".join(biosphere_ids[i]['categories'])),'biosphere3_id': biosphere_links[i], 'unit': biosphere_ids[i]['unit']} for i, x in enumerate(biosphere)]
-        
-        # collate the data
-        data = {
-            'foreground flows':foreground_names,
-            'Af':{'shape': Af_shape, 'data': matrix_to_coo(Af)},
-            'background flows': technosphere_names,
-            'Ad':{'shape': Ad_shape, 'data': matrix_to_coo(Ad)},
-            'foreground emissions': biosphere_names,
-            'Bf':{'shape': Bf_shape, 'data': matrix_to_coo(Bf)}
-        }
-        
-        return data
+
+        return foreground_names, technosphere_names, biosphere_names, \
+               matrix_to_coo(Af), matrix_to_coo(Ad), matrix_to_coo(Bf)
