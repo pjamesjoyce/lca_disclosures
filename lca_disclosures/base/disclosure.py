@@ -87,6 +87,11 @@ class BaseDisclosure(object):
 
     @property
     def cutoffs(self):
+        """
+        Generator. Yields disclosed flows that are cutoffs (i.e. foreground flows that have no termination in any
+        of the foreground matrices and emissions that have no specified context)
+        :return:
+        """
         for i, ff in enumerate(self.foreground_flows):
             if self._check_cutoff(i):
                 yield ff
@@ -96,10 +101,18 @@ class BaseDisclosure(object):
 
     @property
     def efn(self):
+        """
+        This accessor returns the evaluated filename (without extension)
+        :return:
+        """
         return self._prepare_efn()
 
     @property
     def data(self):
+        """
+        This accessor returns the all disclosure data in a dict
+        :return:
+        """
         d_i, d_ii, d_iii, d_iv, d_v, d_vi = self.disclosure
 
         p = len(d_i)

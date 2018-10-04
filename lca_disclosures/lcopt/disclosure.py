@@ -1,4 +1,4 @@
-from ..base.exporter import BaseDisclosure
+from ..base import BaseDisclosure
 from ..utils import matrix_to_coo
 
 import numpy as np
