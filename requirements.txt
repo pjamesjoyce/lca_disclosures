@@ -1,0 +1,10 @@
+## lca_disclosures - requirements
+
+## required by base class - NONE
+
+## required by lcopt and brightway2
+scipy
+numpy
+
+## required by brightway2
+brightway2
