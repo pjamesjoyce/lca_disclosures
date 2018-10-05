@@ -5,7 +5,9 @@ from lca_disclosures.lcopt.disclosure import LcoptDisclosure as DisclosureExport
 
 def test_lcopt_disclosure():
 
-	model = LcoptModel(load='assets/Test_model.lcopt', autosetup=False)
+	fname = os.path.join('assets', 'Test_model.lcopt')
+
+	model = LcoptModel(load=fname, autosetup=False)
 
 	lde = DisclosureExporter(model, parameter_set=0, folder_path='exporter_testing')
 
