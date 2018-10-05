@@ -31,11 +31,11 @@ install:
   # Create environment
   - conda create -q -n test python=$TRAVIS_PYTHON_VERSION
   - source activate test
-  - conda install -q --use-local lcopt-dev
+  - conda install -q --use-local lca_disclosures
   - pip install -r travis-requirements.txt
 
 # command to run tests
-script: cd tests; pytest --cov=lcopt
+script: cd tests; pytest --cov=lca_disclosures
 
 after_success: 
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
