@@ -24,15 +24,13 @@ def test_bw2_disclosure():
 
     disclosure_file = de.write_json()
 
-    print (disclosure_file)
+    print (os.path.realpath(disclosure_file))
 
     assert os.path.isfile(disclosure_file)
 
-def test_bw2_import():
-
     bw2.projects.set_current(IMPORT_PROJECT_NAME)
 
-    di = DisclosureImporter(os.path.join(os.path.dirname(os.path.realpath(__file__)), TEST_FOLDER, "{}.json".format(TEST_FILENAME)))
+    di = DisclosureImporter(disclosure_file)
 
     di.apply_strategies()
 
