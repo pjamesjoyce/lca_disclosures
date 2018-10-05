@@ -1,1 +1,1 @@
-from .base.exporter import BaseExporter
+from .base.exporter import BaseDisclosure

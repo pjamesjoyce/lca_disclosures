@@ -1,6 +1,6 @@
-'''
+"""
 To create the wheel run - python setup.py bdist_wheel
-'''
+"""
 
 from setuptools import setup
 import os
@@ -21,18 +21,18 @@ for dirpath, dirnames, filenames in os.walk('lca_disclosures'):
 
 def package_files(directory):
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
-        for filename in filenames:
+    for (path, directories, fnames) in os.walk(directory):
+        for filename in fnames:
             paths.append(os.path.join('..', path, filename))
     return paths
 
 
 my_package_files = []
-#my_package_files.extend(package_files(os.path.join('lcopt', 'assets')))
-#my_package_files.extend(package_files(os.path.join('lcopt', 'static')))
-#my_package_files.extend(package_files(os.path.join('lcopt', 'templates')))
-#my_package_files.extend(package_files(os.path.join('lcopt', 'bin')))
-#print(my_package_files)
+# my_package_files.extend(package_files(os.path.join('lcopt', 'assets')))
+# my_package_files.extend(package_files(os.path.join('lcopt', 'static')))
+# my_package_files.extend(package_files(os.path.join('lcopt', 'templates')))
+# my_package_files.extend(package_files(os.path.join('lcopt', 'bin')))
+# print(my_package_files)
 
 setup(
     name='lca_disclosures',
@@ -43,8 +43,8 @@ setup(
     license=open('LICENSE').read(),
     package_data={'lca_disclosures': my_package_files},
     #entry_points = {
-    #    'console_scripts': [
-    #    ]
+    #   'console_scripts': [
+    #   ]
     #},
     #install_requires=[
     #],
@@ -53,7 +53,8 @@ setup(
     download_url="https://github.com/pjamesjoyce/lca_disclosures/archive/0.1.0.tar.gz",
     long_description=open('README.md').read(),
     description='Python based tools for working with LCA foreground model disclosures',
-    keywords=['LCA', 'Life Cycle Assessment', 'Foreground system', 'Background system', 'Foreground model', 'Fully parameterised'],
+    keywords=['LCA', 'Life Cycle Assessment', 'Foreground system', 'Background system',
+              'Foreground model', 'Fully parameterised'],
     classifiers=[
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
