@@ -1,0 +1,40 @@
+{% set name = "lca_disclosures" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: '{{ name|lower }}'
+  version: '{{ version }}'
+
+source:
+  path: ../../..
+
+build:
+  noarch: python
+  number: 0
+  script: python setup.py install  --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python
+    - setuptools
+  run:
+    - python
+    - bw2data >=3.4.2
+    - brightway2 >=2.1.2
+    - pandas
+    - pyyaml
+    - eidl
+    - flask
+    - pywin32 # [win]
+    - bw2io >=0.7.1
+    - lcopt-dev
+
+about:
+  home: https://github.com/pjamesjoyce/lca_disclosures/
+  license: BSD 3-Clause
+  license_family: BSD
+  license_file: LICENSE.txt
+  summary: 'Python based tools for working with LCA foreground model disclosures'
+  description: 'Python based tools for working with LCA foreground model disclosures'
+  doc_url: 'http://lca_disclosures.readthedocs.io/en/latest/index.html'
+  dev_url: 'https://github.com/pjamesjoyce/lca_disclosures'
