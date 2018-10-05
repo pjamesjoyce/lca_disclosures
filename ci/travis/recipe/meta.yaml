@@ -33,7 +33,7 @@ about:
   home: https://github.com/pjamesjoyce/lca_disclosures/
   license: BSD 3-Clause
   license_family: BSD
-  license_file: LICENSE.txt
+  license_file: LICENSE
   summary: 'Python based tools for working with LCA foreground model disclosures'
   description: 'Python based tools for working with LCA foreground model disclosures'
   doc_url: 'http://lca_disclosures.readthedocs.io/en/latest/index.html'
