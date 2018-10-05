@@ -22,7 +22,7 @@ install:
   - "conda build .\\ci\\travis\\recipe"
   - "conda create -n test_env python=%CONDA_ENV_PY%"
   - "activate test_env"
-  - "conda install --use-local lcopt-dev"
+  - "conda install --use-local lca_disclosures"
   - 'conda install -q "pytest<3.5"'
 
 test_script:
