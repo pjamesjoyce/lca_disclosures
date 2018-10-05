@@ -10,7 +10,7 @@ class BaseDisclosure(object):
     def __init__(self, folder_path=None, filename=None):
         self.folder_path = folder_path
         self.filename = filename
-        self._prepare_disclosure()
+        self._disclosure = self._prepare_disclosure()
 
     @property
     def folder_path(self):

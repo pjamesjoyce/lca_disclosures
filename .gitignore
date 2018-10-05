@@ -105,3 +105,7 @@ venv.bak/
 
 # pycharm
 .idea/
+
+# module specific ignores
+examples/exporter_testing/
+examples/Example Model.lcopt
