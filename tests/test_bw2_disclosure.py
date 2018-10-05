@@ -24,6 +24,8 @@ def test_bw2_disclosure():
 
     disclosure_file = de.write_json()
 
+    print (disclosure_file)
+
     assert os.path.isfile(disclosure_file)
 
 def test_bw2_import():

@@ -26,4 +26,4 @@ install:
   - 'conda install -q "pytest<3.5"'
 
 test_script:
-  - "py.test"
+  - "pytest -s"
