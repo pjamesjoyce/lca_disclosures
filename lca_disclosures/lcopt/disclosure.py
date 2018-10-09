@@ -34,7 +34,7 @@ class LcoptDisclosure(BaseDisclosure):
 
     def _prepare_efn(self):
 
-        if  isinstance(self.filename, str):
+        if isinstance(self.filename, str):
             efn = self.filename
         else:
             if self.parameter_set is None:

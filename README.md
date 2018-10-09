@@ -43,12 +43,12 @@ And three sparse matrix specifications:
 
 A visual representation of the disclosure is found in Figure 3 of the above paper:
 
-![Graphical depiction of an LCA disclosure](todo/relative/path/to/image.png)
+![Graphical depiction of an LCA disclosure](jie-disclosure_fig3.png)
 
 ## Development
 
 The base Disclosure class is abstract, and a subclass must be created for each supported software type.  A subclass must populate the following methods:
 
  - `_prepare_efn()` returns the evaluated filename used to store disclosure serializations.
- - `_prepare_disclosure()` assigns a 6-tuple to `self._disclosure` corresponding to the 6 disclosure elements, in the order listed above. 
- - `__init__()` must be written to handle input data and then call the superclass `__init__`, which calls `_prepare_disclosure()`
+ - `_prepare_disclosure()` returns a 6-tuple corresponding to the 6 disclosure elements, in the order listed above. 
+ - `__init__()` must be written to handle input data and then call the superclass `__init__`, which computes `_prepare_disclosure()` and stores the output.
