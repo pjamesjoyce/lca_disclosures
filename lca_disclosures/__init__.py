@@ -1,1 +1,1 @@
-from .base.disclosure import BaseDisclosure
+from .base import BaseDisclosure, from_file

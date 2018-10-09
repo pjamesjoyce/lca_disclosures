@@ -9,7 +9,7 @@ The `lca_disclosures` repository supports the generation of a disclosure specifi
  
  - Brightway2
  - lcopt
- - lca-tools
+ - lca-tools (* pending migration)
   
 ### Usage
 
@@ -43,7 +43,7 @@ And three sparse matrix specifications:
 
 A visual representation of the disclosure is found in Figure 3 of the above paper:
 
-![Graphical depiction of an LCA disclosure](jie-disclosure_fig3.png)
+<img alt="Graphical depiction of an LCA disclosure" src="jie-disclosure_fig3.png" width=384>
 
 ## Development
 
