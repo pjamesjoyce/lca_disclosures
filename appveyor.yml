@@ -2,8 +2,8 @@ build: false
 
 before_test:
   - "echo testing..."
-  - "python -V"
-  - "pip install pytest"
+  - "python3 -V"
+  - "pip3 install pytest lcopt"
 
 test_script:
   - "cd tests"
