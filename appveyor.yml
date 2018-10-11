@@ -8,7 +8,7 @@ environment:
   PYTEST: "C:\\Python36-x64\\Scripts\\pytest" 
 
 install:
-  - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas pyyaml"
+  - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas pyyaml beautifulsoup4"
   - "%PIP% install git+https://github.com/haasad/EcoInventDownLoader.git"
   - "%PIP% install C:\\projects\\lca-disclosures"
 
