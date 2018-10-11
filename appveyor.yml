@@ -9,6 +9,7 @@ environment:
 
 install:
   - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas pyyaml"
+  - "%PIP% install git+https://github.com/haasad/EcoInventDownLoader.git"
   - "%PIP% install C:\\projects\\lca-disclosures"
 
 
