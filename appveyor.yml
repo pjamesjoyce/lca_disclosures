@@ -10,7 +10,7 @@ before_test:
   - "echo testing..."
   - "echo %PYTHON3%"
   - "echo %PIP%"
-  - "%PYTHON3% python -V"
+  - "%PYTHON3%\\python -V"
   - "%PIP% install pytest lcopt"
 
 test_script:
