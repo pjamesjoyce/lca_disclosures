@@ -1,30 +1,39 @@
+def check_direction(dirn):
+    if isinstance(dirn, str):
+        dirn = dirn[0].lower()
+    return {0: 'Input',
+            1: 'Output',
+            'i': 'Input',
+            'o': 'Output'}[dirn]
+
+
 class DisclosedFlow(object):
     """
     A DisclosedFlow is any row in the Af, Ad, or Bf matrix that makes up the disclosure.  The flow must be defined
-    at minimum by an index (0-based), which is its position in the row of its matrix, a name, a direction for which
-    the flow has a positive measure, and its quantitative unit of measure.
+    at minimum by a name, a direction for which the flow has a positive measure, and its quantitative unit of measure.
 
     Optional keyword arguments include a location, which is the locale of the node, and and external_ref, which is
-    used to make reference to the flow from outside the disclosure.  Any additional kwargs are appended to the output
-    when the flow is serialized.
+    used to make reference to the flow from outside the disclosure.  An external_ref is required to be unique.
 
     The external_ref becomes mandatory for background flows and emissions, along with a second ref specifying the
     activity or context that "terminates" (i.e. provides the partner to) the exchange.
 
+    Any additional kwargs are appended to the output when the flow is serialized.
+
     ABOUT DISCLOSED FLOW DIRECTIONS
 
-    Each DisclosedFlow comprises "half" an exchange, with the index specifying one of the partners to the exchange
-    (i.e. the row of the matrix entry that features the flow).  The stated 'direction' is always interpreted with
-    respect to the OTHER partner to the exchange (i.e. the column of the matrix entry).  This somewhat counterintuitive
-    convention privileges column-wise reading of exchange data, and enables the same sign/direction convention to be
-    used for technosphere flows, cutoff flows, and emissions alike.
+    Each DisclosedFlow comprises "half" an exchange, specifying one of the partners to the exchange (i.e. the flow's
+    index in a particular disclosure list indicates the row of the entry in the corresponding matrix).  The stated
+    'direction' is always interpreted with respect to the OTHER partner to the exchange (i.e. the column of the matrix
+    entry).  This somewhat counterintuitive convention privileges column-wise reading of exchange data, and enables the
+    same sign/direction convention to be used for technosphere flows, cutoff flows, and emissions alike.
 
-    For example, consider a DisclosedFlow with index=5, name='magic gas', direction='input', and unit='m3'. Then a
-    matrix entry (row=5, column=0), value=0.1234) means that 0.1234 m3 of magic gas travels OUT of the
-    node at row-index 5 and INTO the node at column-index 0 for every for a unit activity of node in column 0.  This
-    means that the natural direction for the *reference flow* at node 5 is OUTPUT (i.e. the opposite of the direction
-    given in the disclosed flow).  This interpretation is consistent, regardless of whether the disclosed flow is part
-    of Af, Ad, or Bf.
+    For example, consider a DisclosedFlow with name='magic gas', direction='input', and unit='m3', which appears fifth
+    in a list of disclosed flows. Then a matrix entry (row=5, column=0), value=0.1234) means that 0.1234 m3 of magic
+    gas travels OUT of the node at row-index 5 and INTO the node at column-index 0 for every for a unit activity of
+    node in column 0.  This means that the natural direction for the *reference flow* at node 5 is OUTPUT (i.e. the
+    opposite of the direction given in the disclosed flow).  This interpretation is consistent, regardless of whether
+    the disclosed flow is part of Af, Ad, or Bf.
 
     Given a matrix entry ((row, col), value), the direction of the exchange is determined by the row index. A positive
     value indicates that the flow is has the stated direction with respect to the column index; a negative value
@@ -33,6 +42,8 @@ class DisclosedFlow(object):
     In Ecoinvent, all ordinary technosphere flows have direction 'Input', while treatment flows have direction 'Output.'
     Because of the convention is that all reference flows be outputs,on-diagonal entries for treatment flows are
     negated.
+
+    Entirely arbitrarily, integer 0 is considered equivalent to 'Input', and integer 1 is equivalent to 'Output.'
 
     For Emission flows, the direction is as expected (i.e. 'Output' indicates an emission from the technosphere, while
     'Input' indicates a resource extraction from the environment).
@@ -44,10 +55,9 @@ class DisclosedFlow(object):
     _direction = None
     _flow_type = None
 
-    def __init__(self, index, name, direction, unit, location=None, external_ref=None, **kwargs):
+    def __init__(self, name, direction, unit, location=None, external_ref=None, **kwargs):
         """
 
-        :param index:
         :param name:
         :param direction:
         :param unit:
@@ -55,7 +65,6 @@ class DisclosedFlow(object):
         :param external_ref:
         :param kwargs:
         """
-        self._index = index
         self._flow_name = name
         self.direction = direction
         self._unit = unit
@@ -64,12 +73,8 @@ class DisclosedFlow(object):
         self.init_args = kwargs
 
     @property
-    def index(self):
-        return self._index
-
-    @property
     def external_ref(self):
-        return self._external_ref or self._index
+        return self._external_ref or self.full_name
 
     @property
     def name(self):
@@ -81,8 +86,10 @@ class DisclosedFlow(object):
 
     @direction.setter
     def direction(self, value):
-        if value.lower() not in ('input', 'output'):
-            raise ValueError('Direction must be input or output')
+        try:
+            value = check_direction(value)
+        except KeyError:
+            raise ValueError('Direction must be input (or 0) or output (or 1)')
         self._direction = value
 
     @property
@@ -99,7 +106,6 @@ class DisclosedFlow(object):
 
     def serialize(self):
         d = {
-            'index': int(self.index),
             'name': str(self.name),
             'unit': str(self.unit),
             'location': str(self.location)
@@ -108,12 +114,25 @@ class DisclosedFlow(object):
         return d
 
     @property
-    def flow_name(self):
+    def full_name(self):
         if len(self.location) > 0:
             locale = '[%s] ' % self.location
         else:
             locale = ''
         return '%s %s[%s]' % (self._flow_name, locale, self.direction)
+
+    def __hash__(self):
+        return hash((self.external_ref, self.direction))
+
+    def __eq__(self, other):
+        try:
+            oer = other.external_ref
+            od = check_direction(other.direction)
+        except AttributeError:
+            return NotImplemented
+        if self.external_ref == oer and self.direction == od:
+            return True
+        return False
 
 
 class ForegroundFlow(DisclosedFlow):
@@ -168,8 +187,6 @@ class _SemanticFlow(DisclosedFlow):
         if _termination is None or len(_termination) == 0:
             raise TypeError('%s must be specified! cut-off flows remain in foreground' % self._term_type)
         self._termination = _termination
-        if external_ref is None:
-            raise TypeError('external_ref must be specified for semantic flows!')
         super(_SemanticFlow, self).__init__(*args, external_ref=external_ref, **kwargs)
 
     def serialize(self):
@@ -177,6 +194,20 @@ class _SemanticFlow(DisclosedFlow):
         d['origin'] = str(self.origin)
         d[self._term_type] = str(self._termination)
         return d
+
+    def __hash__(self):
+        return hash((self.origin, self.external_ref, self.direction, self._termination))
+
+    def __eq__(self, other):
+        try:
+            oo = other.origin
+            oer = other.external_ref
+            od = check_direction(other.direction)
+        except AttributeError:
+            return NotImplemented
+        if self.external_ref == oer and self.direction == od and self.origin == oo and hash(self) == hash(other):
+            return True
+        return False
 
 
 class BackgroundFlow(_SemanticFlow):
@@ -195,7 +226,7 @@ class BackgroundFlow(_SemanticFlow):
         """
 
         :param origin:  string signifying the originating database for characterizing the emission flow
-        :param args: index, name, direction, unit
+        :param args: name, direction, unit
         :param activity: mandatory external id for the background activity that 'terminates' the flow in the origin db,
          i.e. provides the partner to the exchange
         :param kwargs: external_ref [required], location, other user-significant keywords
@@ -221,19 +252,16 @@ class EmissionFlow(_SemanticFlow):
     _flow_type = 'emission'
     _term_type = 'context'
 
-    def __init__(self, *args, context=None, external_ref=None, **kwargs):
+    def __init__(self, *args, context=None, **kwargs):
         """
 
         :param origin:  string signifying the originating database for characterizing the emission flow
-        :param args: index, name, direction, unit
+        :param args: name, direction, unit
         :param context: string signifying the environmental compartment with which the flow is exchanged - None
          indicates a cutoff emission.
-        :param external_ref: if None, name is used
         :param kwargs: location, other user-significant keywords
         """
-        if external_ref is None:
-            external_ref = args[1]
-        super(EmissionFlow, self).__init__(*args, _termination=context, external_ref=external_ref, **kwargs)
+        super(EmissionFlow, self).__init__(*args, _termination=context, **kwargs)
 
     @property
     def context(self):

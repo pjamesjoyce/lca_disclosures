@@ -121,6 +121,7 @@ class BaseDisclosure(object):
 
         # collate the data
         data = {
+            'disclosure type': self.__class__.__name__,
             'foreground flows': d_i,
             'Af': {'shape': [p, p], 'data': d_iv},
             'background flows': d_ii,
