@@ -7,12 +7,8 @@ environment:
   PIP: "C:\\Python36-x64\\Scripts\\pip"
   PYTEST: "C:\\Python36-x64\\Scripts\\pytest" 
 
-before_test:
-  - "echo testing..."
-  - "echo %PYTHON3%"
-  - "echo %PIP%"
-  - "%PYTHON3%\\python -V"
-  - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas yaml"
+install:
+  - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas pyyaml"
   - "%PIP% install C:\\projects\\lca-disclosures"
 
 
