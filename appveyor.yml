@@ -2,6 +2,8 @@ build: false
 
 before_test:
   - "echo testing..."
+  - "python -V"
+  - "pip install pytest"
 
 test_script:
   - "cd tests"
