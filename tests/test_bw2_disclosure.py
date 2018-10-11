@@ -17,7 +17,6 @@ def test_attributes():
     assert de.Bf
     assert de.cutoffs
 
-
 def test_bw2_disclosure():
     
     de = DisclosureExporter(TEST_BW_PROJECT_NAME, TEST_BW_DB_NAME, folder_path=TEST_FOLDER, filename=TEST_FILENAME)

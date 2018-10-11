@@ -23,7 +23,7 @@ def setup_fixtures(request):
         if bw2_project_exists(IMPORT_PROJECT_NAME):
             bw2.projects.delete_project(name=IMPORT_PROJECT_NAME, delete_dir=True)
         if bw2_project_exists(TEST_BW_PROJECT_NAME):
-            bw2.projects.delete_project(name=IMPORT_PROJECT_NAME, delete_dir=True)
+            bw2.projects.delete_project(name=TEST_BW_PROJECT_NAME, delete_dir=True)
 
         if bw2_project_exists(DEFAULT_BIOSPHERE_PROJECT):
             bw2.projects.set_current(DEFAULT_BIOSPHERE_PROJECT)

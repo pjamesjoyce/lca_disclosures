@@ -37,7 +37,7 @@ class BaseDisclosure(object):
         The lists should be instances of the appropriate types: ForegroundFlow, BackgroundFlow, EmissionFlow
         The matrices should be given as a nested 2-tuple: ((row, col), data)
 
-        Assigns the 6-tuple to self._disclosure
+        returns a 6-tuple
         :return:
         """
         return NotImplemented
