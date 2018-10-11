@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/pjamesjoyce/lca_disclosures.svg?branch=master)](https://travis-ci.org/pjamesjoyce/lca_disclosures)
+[![Windows Build status](https://ci.appveyor.com/api/projects/status/0iv7ounp1i9fq5g5?svg=true)](https://ci.appveyor.com/project/pjamesjoyce/lca-disclosures)
+[![Coverage Status](https://coveralls.io/repos/github/pjamesjoyce/lca_disclosures/badge.svg?branch=master)](https://coveralls.io/github/pjamesjoyce/lca_disclosures?branch=master)
+
 # lca_disclosures
 Python based tools for working with LCA foreground model disclosures
 

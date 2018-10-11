@@ -1,0 +1,18 @@
+build: false
+
+environment:
+  PYTHON3: "C:\\Python36-x64"
+  PYTHON3_VERSION: "3.6.6"
+  PYTHON3_ARCH: "64"
+  PIP: "C:\\Python36-x64\\Scripts\\pip"
+  PYTEST: "C:\\Python36-x64\\Scripts\\pytest" 
+
+install:
+  - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas pyyaml beautifulsoup4"
+  - "%PIP% install git+https://github.com/haasad/EcoInventDownLoader.git"
+  - "%PIP% install C:\\projects\\lca-disclosures"
+
+
+test_script:
+  - "cd tests"
+  - "%PYTEST%"
