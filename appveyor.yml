@@ -5,6 +5,7 @@ environment:
   PYTHON3_VERSION: "3.6.6"
   PYTHON3_ARCH: "64"
   PIP: "C:\\Python36-x64\\Scripts\\pip"
+  PYTEST: "C:\\Python36-x64\\Scripts\\pytest" 
 
 before_test:
   - "echo testing..."
@@ -15,4 +16,4 @@ before_test:
 
 test_script:
   - "cd tests"
-  - "pytest -s"
+  - "%PYTEST% -s"
