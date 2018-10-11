@@ -12,7 +12,7 @@ before_test:
   - "echo %PYTHON3%"
   - "echo %PIP%"
   - "%PYTHON3%\\python -V"
-  - "%PIP% install pytest lcopt brightway2 flask werkzeug pandas"
+  - "%PIP% install pytest lcopt-dev brightway2 flask werkzeug pandas"
   - "%PIP% install C:\\projects\\lca-disclosures"
 
 
