@@ -15,7 +15,6 @@ def test_attributes():
     assert de.Af
     assert de.Ad
     assert de.Bf
-    assert de.cutoffs
 
 def test_bw2_disclosure():
     

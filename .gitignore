@@ -109,3 +109,4 @@ venv.bak/
 # module specific ignores
 examples/exporter_testing/
 examples/Example Model.lcopt
+examples/Untitled*

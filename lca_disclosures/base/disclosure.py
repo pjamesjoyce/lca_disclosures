@@ -96,7 +96,7 @@ class BaseDisclosure(object):
             if self._check_cutoff(i):
                 yield ff
         for em in self.emission_flows:
-            if em.context is None:
+            if em.context is None: # Note this will throw an error until typed flows are implemented
                 yield em
 
     @property
