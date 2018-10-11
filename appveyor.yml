@@ -1,9 +1,17 @@
 build: false
 
+environment:
+  - PYTHON3: "C:\\Python36-x64"
+    PYTHON3_VERSION: "3.6.6"
+    PYTHON3_ARCH: "64"
+    PIP: "C:\\Python36-x64\Scripts\pip"
+
 before_test:
   - "echo testing..."
-  - "python3 -V"
-  - "pip3 install pytest lcopt"
+  - "echo %PYTHON3%"
+  - "echo %PIP%"
+  - "%PYTHON3% -V"
+  - "%PIP% install pytest lcopt"
 
 test_script:
   - "cd tests"
