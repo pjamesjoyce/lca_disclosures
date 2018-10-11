@@ -1,0 +1,6 @@
+before_test:
+  - "echo testing..."
+
+test_script:
+  - "cd tests"
+  - "pytest -s"
