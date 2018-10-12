@@ -114,12 +114,19 @@ class DisclosedFlow(object):
         return d
 
     @property
-    def full_name(self):
+    def _disp_locale(self):
+        """
+        a courteous display of location
+        :return:
+        """
         if len(self.location) > 0:
-            locale = '[%s] ' % self.location
+            return '[%s] ' % self.location
         else:
-            locale = ''
-        return '%s %s[%s]' % (self._flow_name, locale, self.direction)
+            return ''
+
+    @property
+    def full_name(self):
+        return '%s %s[%s]' % (self._flow_name, self._disp_locale, self.direction)
 
     def __hash__(self):
         return hash((self.external_ref, self.direction))
@@ -266,3 +273,11 @@ class EmissionFlow(_SemanticFlow):
     @property
     def context(self):
         return self._termination
+
+    @property
+    def _disp_context(self):
+        return self.context.split('; ')[-1]
+
+    @property
+    def full_name(self):
+        return '%s (%s) %s[%s]' % (self._flow_name, self._disp_context, self._disp_locale, self.direction)

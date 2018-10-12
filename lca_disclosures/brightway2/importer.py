@@ -6,6 +6,7 @@ from bw2io.importers.base_lci import LCIImporter
 from bw2data import Database, config, databases
 import functools
 import warnings
+from ..utils import data_to_rcv
 
 from bw2io.strategies import (
     set_code_by_activity_hash,
@@ -120,9 +121,9 @@ class DisclosureImporter(LCIImporter):
         Ad_dict = {(x[0][0], x[0][1]): x[1] for x in data['Ad']['data']}
         Bf_dict = {(x[0][0], x[0][1]): x[1] for x in data['Bf']['data']}
 
-        Af_r, Af_c, Af_v = self.data_to_rcv(data['Af'])
-        Ad_r, Ad_c, Ad_v = self.data_to_rcv(data['Ad'])
-        Bf_r, Bf_c, Bf_v = self.data_to_rcv(data['Bf'])
+        Af_r, Af_c, Af_v = data_to_rcv(data['Af'])
+        Ad_r, Ad_c, Ad_v = data_to_rcv(data['Ad'])
+        Bf_r, Bf_c, Bf_v = data_to_rcv(data['Bf'])
 
         for i, a in enumerate(activities):
             
@@ -200,14 +201,6 @@ class DisclosureImporter(LCIImporter):
                 new_exchange[k] = v
 
         return new_exchange
-
-    @staticmethod
-    def data_to_rcv(matrix):
-        r = [x[0][0] for x in matrix['data']]
-        c = [x[0][1] for x in matrix['data']]
-        v = [x[1] for x in matrix['data']]
-
-        return r, c, v
 
     @staticmethod
     def get_required_databases(data):

@@ -1,5 +1,5 @@
 from ..base import BaseDisclosure
-from ..utils import matrix_to_coo
+from ..utils import matrix_to_data
 
 import numpy as np
 
@@ -148,4 +148,4 @@ class LcoptDisclosure(BaseDisclosure):
                            for i, x in enumerate(biosphere)]
 
         return foreground_names, technosphere_names, biosphere_names, \
-            matrix_to_coo(Af), matrix_to_coo(Ad), matrix_to_coo(Bf)
+               matrix_to_data(Af), matrix_to_data(Ad), matrix_to_data(Bf)

@@ -1,6 +1,12 @@
 import json
 import os
 
+from scipy.sparse import coo_matrix, eye
+from scipy.sparse.linalg import spsolve
+from pandas import ExcelWriter
+
+from ..utils import data_to_coo, matrix_to_excel
+
 
 class BaseDisclosure(object):
 
@@ -73,6 +79,15 @@ class BaseDisclosure(object):
     def Bf(self):
         return self.disclosure[5]
 
+    '''
+    Derived values
+    '''
+    def x_tilde(self):
+        Af = data_to_coo(self.Af).tocsr()
+        p = len(self.foreground_flows)
+        b = coo_matrix(([1.0], ([0], [0])), shape=(p, 1))
+        return spsolve(eye(p) - Af, b)
+
     def _check_cutoff(self, k):
         """
 
@@ -96,8 +111,12 @@ class BaseDisclosure(object):
             if self._check_cutoff(i):
                 yield ff
         for em in self.emission_flows:
-            if em.context is None: # Note this will throw an error until typed flows are implemented
+            if em.context is None:  # Note this will throw an error until typed flows are implemented
                 yield em
+
+    '''
+    IO operations
+    '''
 
     @property
     def efn(self):
@@ -106,6 +125,20 @@ class BaseDisclosure(object):
         :return:
         """
         return self._prepare_efn()
+
+    def _spec_filename(self, filename=None, folder_path=None):
+        folder_path = folder_path or self.folder_path
+
+        if filename is None:
+            filename = self.efn
+
+        if folder_path is not None:
+
+            if not os.path.isdir(folder_path):
+                os.mkdir(folder_path)
+
+            filename = os.path.join(folder_path, filename)
+        return filename
 
     @property
     def data(self):
@@ -132,23 +165,43 @@ class BaseDisclosure(object):
 
         return data
 
-    def write_json(self, folder_path=None):
+    def write_json(self, filename=None, folder_path=None):
 
-        folder_path = folder_path or self.folder_path
+        filename = self._spec_filename(filename=filename, folder_path=folder_path)
 
-        if folder_path is not None:
+        filename += '.json'
 
-            if not os.path.isdir(folder_path):
-                os.mkdir(folder_path)
-
-            full_efn = os.path.join(folder_path, self.efn)
-
-        else:
-            full_efn = self.efn
-
-        full_efn += '.json'
-
-        with open(full_efn, 'w') as f:
+        with open(filename, 'w') as f:
             json.dump(self.data, f)
 
-        return full_efn
+        return filename
+
+    def write_excel(self, filename=None, folder_path=None):
+        filename = self._spec_filename(filename=filename, folder_path=folder_path)
+
+        filename += '.xlsx'
+
+        xlw = ExcelWriter(filename)
+
+        fg = ['%d. %s' % (i, ff.full_name) for i, ff in enumerate(self.foreground_flows)]
+        bg = [bg.full_name for bg in self.background_flows]
+        em = [em.full_name for em in self.emission_flows]
+
+        Af = data_to_coo(self.Af)
+        Ad = data_to_coo(self.Ad)
+        Bf = data_to_coo(self.Bf)
+
+        matrix_to_excel(xlw, sheetname='Af', matrix=Af, index=fg)
+        matrix_to_excel(xlw, sheetname='Ad', matrix=Ad, index=bg)
+        matrix_to_excel(xlw, sheetname='Bf', matrix=Bf, index=em)
+
+        xt = self.x_tilde()
+        ad = Ad * xt
+        matrix_to_excel(xlw, sheetname='ad', matrix=ad, index=bg)
+
+        bf = Bf * xt
+        matrix_to_excel(xlw, sheetname='bf', matrix=bf, index=em)
+
+        xlw.save()
+
+        return filename

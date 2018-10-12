@@ -2,7 +2,7 @@ import brightway2 as bw
 import numpy as np
 
 from ..base import BaseDisclosure
-from ..utils import matrix_to_coo
+from ..utils import matrix_to_data
 
 
 def reconstruct_matrix(matrix_dict, normalise=False, clear_diagonal=False):
@@ -130,7 +130,7 @@ class Bw2Disclosure(BaseDisclosure):
         unprocessed_foreground_matrix = {'data': foreground_coords, 'shape': (len(foreground), len(foreground))}
         processed_matrix = reconstruct_matrix(unprocessed_foreground_matrix, normalise=True,  clear_diagonal=True)
         
-        foreground_coords = matrix_to_coo(processed_matrix)
+        foreground_coords = matrix_to_data(processed_matrix)
         # foreground_matrix = {'data':foreground_coords, 'shape':(len(foreground), len(foreground))}
 
         return foreground_names, technosphere_names, biosphere_names, foreground_coords, techno_coords, bio_coords
