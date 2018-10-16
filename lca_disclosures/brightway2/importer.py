@@ -7,6 +7,8 @@ from bw2data import Database, config, databases
 import functools
 import warnings
 from ..utils import data_to_rcv
+from .disclosure import origin_to_bw2
+
 
 from bw2io.strategies import (
     set_code_by_activity_hash,
@@ -152,32 +154,32 @@ class DisclosureImporter(LCIImporter):
             biosphere_inputs = [Bf_r[n] for n, x in enumerate(Bf_c) if x == i]
 
             for f in foreground_inputs:
-                new_activity['exchanges'].append(self.generate_exchange(database=self.db_name,
-                                                                        amount=Af_dict[(f, i)],
-                                                                        type='technosphere', **activities[f]))
+                new_activity['exchanges'].append(self.gen_exchange(database=self.db_name,
+                                                                   amount=Af_dict[(f, i)],
+                                                                   type='technosphere', **activities[f]))
             for t in technosphere_inputs:
-                new_activity['exchanges'].append(self.generate_exchange(database=technosphere[t]['brightway_id'][0],
-                                                                        amount=Ad_dict[(t, i)],
-                                                                        type='technosphere',
-                                                                        name=technosphere[t]['ecoinvent_name'],
-                                                                        activity=technosphere[t]['ecoinvent_id'],
-                                                                        **technosphere[t]))
+                new_activity['exchanges'].append(self.gen_exchange(database=origin_to_bw2(technosphere[t]['origin']),
+                                                                   amount=Ad_dict[(t, i)],
+                                                                   type='technosphere',
+                                                                   name=technosphere[t]['name'],
+                                                                   activity=technosphere[t]['activity'],
+                                                                   **technosphere[t]))
             for b in biosphere_inputs:
-                new_activity['exchanges'].append(self.generate_exchange(database=biosphere[b]['biosphere3_id'][0],
-                                                                        amount=Bf_dict[(b, i)], type='biosphere',
-                                                                        code=biosphere[b]['biosphere3_id'][1],
-                                                                        **biosphere[b]))
+                new_activity['exchanges'].append(self.gen_exchange(database=origin_to_bw2(biosphere[b]['origin']),
+                                                                   amount=Bf_dict[(b, i)], type='biosphere',
+                                                                   code=biosphere[b]['external_ref'][1],
+                                                                   **biosphere[b]))
 
             new_data.append(new_activity)
 
         return new_data
 
     @staticmethod
-    def generate_exchange(**kwargs):
+    def gen_exchange(**kwargs):
         if kwargs.get('type') == 'biosphere':
             new_exchange = {
                 'amount': kwargs.get('amount'),
-                'categories': kwargs.get('categories'),
+                'categories': tuple(kwargs.get('context').split('; ')),
                 'database': kwargs.get('database'),
                 'name': kwargs.get('name'),
                 'type': kwargs.get('type'),

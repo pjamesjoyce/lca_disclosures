@@ -1,8 +1,20 @@
 import brightway2 as bw
 import numpy as np
 
+from ..flow_types import ForegroundFlow, BackgroundFlow, EmissionFlow
 from ..base import BaseDisclosure
 from ..utils import matrix_to_data
+
+
+def bw2_to_origin(db_name):
+    return '.'.join(['local', 'bw2', db_name])
+
+
+def origin_to_bw2(origin):
+    prefix = 'local.bw2.'
+    if origin.startswith(prefix):
+        return origin[len(prefix):]
+    raise ValueError('Origin does not match BW2 convention')
 
 
 def reconstruct_matrix(matrix_dict, normalise=False, clear_diagonal=False):
@@ -25,6 +37,7 @@ class Bw2Disclosure(BaseDisclosure):
 
         self.project_name = project_name
         self.database_name = database_name
+        self.origin = bw2_to_origin(database_name)
         self.fu = fu
         super(Bw2Disclosure, self).__init__(**kwargs)
 
@@ -61,7 +74,7 @@ class Bw2Disclosure(BaseDisclosure):
             
             temp_matrix = reconstruct_matrix({'data': temp_foreground, 'shape': (len(foreground), len(foreground))})
             
-            fu_list = [foreground[i] for i, x in enumerate(foreground)
+            fu_list = [x for i, x in enumerate(foreground)
                        if list(temp_matrix.sum(axis=1))[i] == 0 and list(temp_matrix.sum(axis=0))[i] != 0]
             foreground = fu_list + [x for x in foreground if x not in fu_list]
         
@@ -90,40 +103,31 @@ class Bw2Disclosure(BaseDisclosure):
         technosphere_info = [bw.Database(x[0]).get(x[1]) for x in technosphere]
         biosphere_info = [bw.Database(x[0]).get(x[1]) for x in biosphere]
         foreground_info = [bw.Database(x[0]).get(x[1]) for x in foreground]
-        
-        technosphere_names = [
-                                {
-                                    'index': i,
-                                    'ecoinvent_name': technosphere_info[i].get('name', 'n/a'),
-                                    'ecoinvent_id': technosphere_info[i].get('activity', 'n/a'),
-                                    'brightway_id': technosphere[i],
-                                    'unit': technosphere_info[i].get('unit', 'n/a'),
-                                    'location': technosphere_info[i].get('location', 'n/a')
-                                }
-                                for i, x in enumerate(technosphere)
-        ]
 
-        biosphere_names = [
-                            {
-                                'index': i,
-                                'name': "{}, {}, {}".format(biosphere_info[i]['name'], biosphere_info[i]['type'],
-                                                            ",".join(biosphere_info[i]['categories'])),
-                                'biosphere3_id': biosphere[i],
-                                'unit': biosphere_info[i]['unit']
-                            }
-                            for i, x in enumerate(biosphere)
-        ]
+        # for BW2, use database name as origin and database ID as external_ref
+        technosphere_flows = [BackgroundFlow(bw2_to_origin(x[0]), technosphere_info[i].get('name', 'n/a'),
+                                             'Input',  # need help supporting explicit directions in bw2
+                                             technosphere_info[i].get('unit', 'n/a'),
+                                             activity=technosphere_info[i].get('activity', 'n/a'),
+                                             location=technosphere_info[i].get('location', None),
+                                             external_ref=x[1])
+                              for i, x in enumerate(technosphere)]
 
-        foreground_names = [
-                            {
-                                'index': i,
-                                'name': foreground_info[i]['name'],
-                                'unit': foreground_info[i]['unit'],
-                                'location': foreground_info[i]['location']
-                            }
-                            for i, x in enumerate(foreground)
-        ]
-        
+        biosphere_flows = [EmissionFlow(bw2_to_origin(x[0]),
+                                        "{}, {}".format(biosphere_info[i]['name'], biosphere_info[i]['type']),
+                                        'Output',  # need help supporting explicit directions in bw2
+                                        biosphere_info[i]['unit'],
+                                        context='; '.join(biosphere_info[i]['categories']),
+                                        external_ref=x[1])
+                           for i, x in enumerate(biosphere)]
+
+        foreground_flows = [ForegroundFlow(foreground_info[i]['name'],
+                                           'Input',  # need help supporting explicit directions in bw2
+                                           foreground_info[i]['unit'],
+                                           location=foreground_info[i]['location'],
+                                           external_ref=x[1])
+                            for i, x in enumerate(foreground)]
+
         # techno_matrix = {'data':techno_coords, 'shape':(len(technosphere),len(foreground))}
         # bio_matrix = {'data':bio_coords, 'shape':(len(biosphere),len(foreground))}
         
@@ -133,7 +137,7 @@ class Bw2Disclosure(BaseDisclosure):
         foreground_coords = matrix_to_data(processed_matrix)
         # foreground_matrix = {'data':foreground_coords, 'shape':(len(foreground), len(foreground))}
 
-        return foreground_names, technosphere_names, biosphere_names, foreground_coords, techno_coords, bio_coords
+        return foreground_flows, technosphere_flows, biosphere_flows, foreground_coords, techno_coords, bio_coords
 
 
 """
@@ -153,7 +157,7 @@ class Bw2Disclosure(BaseDisclosure):
         if isinstance(self.filename, str):
             efn = self.filename
         else:
-            efn = '{}_{}.json'.format(self.project_name.replace(" ", "_"), self.database_name.replace(" ", "_"))
+            efn = '{}_{}.json'.format(self.project_name.replace(" ", "_"), self.origin.replace(" ", "_"))
         
         if isinstance(self.folder_path, str):
 

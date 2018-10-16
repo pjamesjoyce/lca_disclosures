@@ -276,8 +276,15 @@ class EmissionFlow(_SemanticFlow):
 
     @property
     def _disp_context(self):
-        return self.context.split('; ')[-1]
+        """
+        This could be endlessly elaborated. i.e. if context.split('; ')[-1] == 'unspecified' we should do something
+        :return:
+        """
+        try:
+            return '(%s) ' % self.context.split('; ')[-1]
+        except IndexError:
+            return ''
 
     @property
     def full_name(self):
-        return '%s (%s) %s[%s]' % (self._flow_name, self._disp_context, self._disp_locale, self.direction)
+        return '%s %s%s[%s]' % (self._flow_name, self._disp_context, self._disp_locale, self.direction)

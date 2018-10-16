@@ -10,6 +10,7 @@ from ..utils import data_to_coo, matrix_to_excel
 
 class BaseDisclosure(object):
 
+    _origin = None
     _folder_path = None
     _disclosure = None
 
@@ -27,6 +28,16 @@ class BaseDisclosure(object):
         if self._folder_path is not None:
             raise AttributeError('folder_path already set')
         self._folder_path = value
+
+    @property
+    def origin(self):
+        return self._origin
+
+    @origin.setter
+    def origin(self, value):
+        if self._origin is not None:
+            raise AttributeError('foreground origin already set: %s' % self._origin)
+        self._origin = value
 
     def _prepare_efn(self):
         """
@@ -155,13 +166,16 @@ class BaseDisclosure(object):
         # collate the data
         data = {
             'disclosure type': self.__class__.__name__,
-            'foreground flows': d_i,
+            'foreground flows': [x.serialize() for x in d_i],
             'Af': {'shape': [p, p], 'data': d_iv},
-            'background flows': d_ii,
+            'background flows': [x.serialize() for x in d_ii],
             'Ad': {'shape': [n, p], 'data': d_v},
-            'foreground emissions': d_iii,
+            'foreground emissions': [x.serialize() for x in d_iii],
             'Bf': {'shape': [m, p], 'data': d_vi}
         }
+
+        if self.origin is not None:
+            data['origin'] = self.origin
 
         return data
 
