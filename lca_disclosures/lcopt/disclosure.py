@@ -136,14 +136,14 @@ class LcoptDisclosure(BaseDisclosure):
         technosphere_names = [{'index': i,
                                'ecoinvent_name': technosphere_info[i].get('name', 'n/a'),
                                'ecoinvent_id': technosphere_info[i].get('activity', 'n/a'),
-                               'brightway_id':technosphere_links[i],
+                               'brightway_id': list(technosphere_links[i]),
                                'unit': technosphere_info[i].get('unit', 'n/a'),
                                'location':technosphere_info[i].get('location', 'n/a')}
                               for i, x in enumerate(technosphere)]
         biosphere_names = [{'index': i,
                             'name': "{}, {}, {}".format(biosphere_ids[i]['name'], biosphere_ids[i]['type'],
                                                         ",".join(biosphere_ids[i]['categories'])),
-                            'biosphere3_id': biosphere_links[i],
+                            'biosphere3_id': list(biosphere_links[i]),
                             'unit': biosphere_ids[i]['unit']}
                            for i, x in enumerate(biosphere)]
 

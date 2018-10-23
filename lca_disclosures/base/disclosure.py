@@ -131,7 +131,7 @@ class BaseDisclosure(object):
 
         return data
 
-    def write_json(self, folder_path=None):
+    def write_json(self, folder_path=None, **kwargs):
 
         folder_path = folder_path or self.folder_path
 
@@ -148,6 +148,6 @@ class BaseDisclosure(object):
         full_efn += '.json'
 
         with open(full_efn, 'w') as f:
-            json.dump(self.data, f)
+            json.dump(self.data, f, **kwargs)
 
         return full_efn
