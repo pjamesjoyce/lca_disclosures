@@ -1,6 +1,6 @@
 from .foreground_observer import ForegroundObserver
 from .traversal_observer import TraversalObserver
-from .to_excel import to_excel
+
 
 from lca_disclosures import BaseDisclosure
 
@@ -10,7 +10,7 @@ class _AntelopeDisclosure(BaseDisclosure):
 
     def _prepare_efn(self):
         if self.filename is None:
-            return str(self._observer.functional_unit)
+            return str(self._observer.functional_unit.flow)
         return self.filename
 
     def _prepare_disclosure(self):

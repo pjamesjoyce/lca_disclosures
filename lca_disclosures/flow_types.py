@@ -126,7 +126,7 @@ class DisclosedFlow(object):
 
     @property
     def full_name(self):
-        return '%s %s[%s]' % (self._flow_name, self._disp_locale, self.direction)
+        return '%s %s%s (%s)' % (self._flow_name, self._disp_locale, self.unit, self.direction)
 
     def __hash__(self):
         return hash((self.external_ref, self.direction))

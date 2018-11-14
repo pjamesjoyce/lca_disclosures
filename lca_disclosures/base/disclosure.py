@@ -94,7 +94,7 @@ class BaseDisclosure(object):
     Derived values
     '''
     def x_tilde(self):
-        Af = data_to_coo(self.Af).tocsr()
+        Af = data_to_coo(self.data['Af']).tocsr()
         p = len(self.foreground_flows)
         b = coo_matrix(([1.0], ([0], [0])), shape=(p, 1))
         return spsolve(eye(p) - Af, b)
@@ -179,14 +179,14 @@ class BaseDisclosure(object):
 
         return data
 
-    def write_json(self, filename=None, folder_path=None):
+    def write_json(self, filename=None, folder_path=None, **kwargs):
 
         filename = self._spec_filename(filename=filename, folder_path=folder_path)
 
         filename += '.json'
 
         with open(filename, 'w') as f:
-            json.dump(self.data, f)
+            json.dump(self.data, f, **kwargs)
 
         return filename
 
@@ -201,13 +201,14 @@ class BaseDisclosure(object):
         bg = [bg.full_name for bg in self.background_flows]
         em = [em.full_name for em in self.emission_flows]
 
-        Af = data_to_coo(self.Af)
-        Ad = data_to_coo(self.Ad)
-        Bf = data_to_coo(self.Bf)
+        data = self.data
+        Af = data_to_coo(data['Af'])
+        Ad = data_to_coo(data['Ad'])
+        Bf = data_to_coo(data['Bf'])
 
-        matrix_to_excel(xlw, sheetname='Af', matrix=Af, index=fg)
-        matrix_to_excel(xlw, sheetname='Ad', matrix=Ad, index=bg)
-        matrix_to_excel(xlw, sheetname='Bf', matrix=Bf, index=em)
+        matrix_to_excel(xlw, sheetname='Af', matrix=Af.todense(), index=fg)
+        matrix_to_excel(xlw, sheetname='Ad', matrix=Ad.todense(), index=bg)
+        matrix_to_excel(xlw, sheetname='Bf', matrix=Bf.todense(), index=em)
 
         xt = self.x_tilde()
         ad = Ad * xt

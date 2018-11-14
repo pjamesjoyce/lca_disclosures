@@ -232,7 +232,7 @@ class Observer(object):
         _ = [x for x in self]  # ensure fully iterated
         p = len(self._fg)
 
-        d_i = [ForegroundFlow(off.flow['Name'], off.direction, off.unit(), location=off.locale)
+        d_i = [ForegroundFlow(off.flow['Name'], off.direction, off.flow.unit(), location=off.locale)
                for off in self._fg.to_list()]  # this returns an ObservedForegroundFlow
         d_i += [ForegroundFlow(flow['Name'], dirn, flow.unit(), location=locale)
                 for flow, dirn, locale in self._co.to_list()]
@@ -244,7 +244,7 @@ class Observer(object):
                 for node, flow, dirn in self._bg.to_list()]
 
         d_iii = [EmissionFlow(flow.origin, flow['Name'], dirn, flow.unit(),
-                              context=flow.context,
+                              context='; '.join(flow['Compartment']),
                               location=locale,
                               external_ref=flow.external_ref)
                  for flow, dirn, locale in self._em.to_list()]
