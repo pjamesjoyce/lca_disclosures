@@ -36,6 +36,7 @@ its OFF without knowing its FFID.
 
 from collections import deque
 from .observer import Observer, ObservedFlow, RX
+from lcatools.interfaces import CONTEXT_STATUS_
 
 
 class EmptyFragQueue(Exception):
@@ -48,6 +49,55 @@ class ProxyParent(object):
         self.term = off.term
 
 
+class ObservedExchange(ObservedFlow):
+    def __init__(self, exch, parent):
+        self._exch = exch
+        self._key = tuple(parent.key + exch.lkey)
+        self.observe(parent)
+
+    @property
+    def key(self):
+        return self._key
+
+    @property
+    def value(self):
+        return self._exch.value
+
+    @property
+    def flow(self):
+        return self._exch.flow
+
+    @property
+    def direction(self):
+        return self._exch.direction
+
+    @property
+    def locale(self):
+        try:
+            return self._exch.process['SpatialScope']
+        except KeyError:
+            return ''
+
+    @property
+    def context(self):
+        return self._exch.termination
+
+    @property
+    def context(self):
+        if CONTEXT_STATUS_ == 'compat':
+            return self.flow['Compartment']
+        else:
+            return self._exch.termination
+
+    @property
+    def emission_key(self):
+        return self.flow, self.direction, self.locale, self.context
+
+    @property
+    def cutoff_key(self):
+        return tuple(self.emission_key[:3])
+
+
 class ObservedFragmentFlow(ObservedFlow):
     def __init__(self, ff, key):
         """
@@ -57,7 +107,6 @@ class ObservedFragmentFlow(ObservedFlow):
         """
         self.ff = ff
         self._key = key
-        self._parent = None
 
     @property
     def key(self):
@@ -107,6 +156,11 @@ class ObservedFragmentFlow(ObservedFlow):
         bg.observe(self.parent)
         return bg
 
+    def observe_em_flow(self):
+        em = ObservedEmFlow(self.ff, self.ffid)
+        em.observe(self.parent)
+        return em
+
     def __repr__(self):
         return str(self)
 
@@ -123,6 +177,26 @@ class ObservedBgFlow(ObservedFragmentFlow):
 
     def __str__(self):
         return 'ObservedBg(Parent: %s, Term: %s, Magnitude: %g)' % (self.parent.key, self.bg_key, self.magnitude)
+
+
+class ObservedEmFlow(ObservedFragmentFlow):
+    @property
+    def locale(self):
+        try:
+            return self.ff.fragment['SpatialScope']
+        except KeyError:
+            return ''
+
+    @property
+    def context(self):
+        return self.term.term_node
+
+    @property
+    def emission_key(self):
+        return self.flow, self.ff.fragment.direction, self.locale, self.context
+
+    def __str__(self):
+        return 'ObservedEm(Flow: %s, Context: %s, Magnitude: %g)' % (self.flow, self.context, self.magnitude)
 
 
 class ObservedCutoff(object):
@@ -162,8 +236,8 @@ class ObservedCutoff(object):
         return self.flow, self.direction, self.parent.locale
 
     @property
-    def emission_key(self):
-        return self.cutoff_key
+    def cutoff_key(self):
+        return self.flow, self.direction, self.parent.locale
 
     def __repr__(self):
         return str(self)
@@ -356,7 +430,7 @@ class TraversalObserver(Observer):
         elif off.ff.term.term_is_bg or off.ff.fragment.is_background:
             self._add_background(off.observe_bg_flow())
         elif off.ff.term.is_emission:
-            self._add_emission(ObservedCutoff.from_off(off))
+            self._add_emission(off.observe_em_flow())
         else:
             self._traverse_node(off)  # make it the parent
             if off.ff.term.is_subfrag:
@@ -368,7 +442,7 @@ class TraversalObserver(Observer):
             else:
                 # add unobserved exchanges--
                 for x in off.ff.term._unobserved_exchanges():
-                    emf = ObservedCutoff.from_exchange(off, x)
+                    emf = ObservedExchange(x, off)
                     self._add_emission(emf)
 
         return off

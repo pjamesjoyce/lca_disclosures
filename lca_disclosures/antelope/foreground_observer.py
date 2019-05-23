@@ -1,4 +1,5 @@
 from .observer import ObservedFlow, RX, Observer
+from lcatools.interfaces import CONTEXT_STATUS_
 
 
 class ObservedForegroundFlow(ObservedFlow):
@@ -24,13 +25,16 @@ class ObservedForegroundFlow(ObservedFlow):
         return self._exch.direction
 
     @property
+    def context(self):
+        return self._exch.termination
+
+    @property
     def locale(self):
         return self._locale
 
     def __repr__(self):
-        return 'ObservedForegroundFlow(Parent: %s, Term: %s: Value: %g)' % (self.parent.key,
-                                                                            self.key,
-                                                                            self.value)
+        return '%s(Parent: %s, Term: %s: Value: %g)' % (self.__class__.__name__, self.parent.key,
+                                                        self.key, self.value)
 
     def __str__(self):
         return str(self._exch)
@@ -51,8 +55,19 @@ class ObservedEmissionFlow(ObservedForegroundFlow):
         super(ObservedEmissionFlow, self).__init__(exch, exch.key, exch.process['SpatialScope'])
 
     @property
+    def context(self):
+        if CONTEXT_STATUS_ == 'compat':
+            return self.flow['Compartment']
+        else:
+            return self._exch.termination
+
+    @property
     def emission_key(self):
-        return self.flow, self.direction, self.locale
+        return self.flow, self.direction, self.locale, self.context
+
+    @property
+    def cutoff_key(self):
+        return tuple(self.emission_key[:3])
 
 
 class ForegroundObserver(Observer):
@@ -72,9 +87,10 @@ class ForegroundObserver(Observer):
     def _add_foreground_deps_ems(self, parent, term):
         self._parent_map[term] = parent
         for x in self._query.dependencies(term):
-            bg = ObservedBackgroundFlow(x, self._query)
-            bg.observe(parent)
-            self._add_background(bg)
+            if self._query.is_in_background(x.termination, x.flow.external_ref):
+                bg = ObservedBackgroundFlow(x, self._query)
+                bg.observe(parent)
+                self._add_background(bg)
 
         for x in self._query.emissions(term):
             em = ObservedEmissionFlow(x)
@@ -99,7 +115,7 @@ class ForegroundObserver(Observer):
 
         else:
             off = ObservedForegroundFlow(x, x.process.external_ref, x.process['SpatialScope'])
-            print('Adding rx')
+            print('Adding rx %s' % off)
             off.observe(RX)
             self._add_foreground(off)
             self._add_foreground_deps_ems(off, off.key)

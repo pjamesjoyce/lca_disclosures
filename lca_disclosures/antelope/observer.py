@@ -39,8 +39,17 @@ class ObservedFlow(object):
     @property
     def emission_key(self):
         """
-        OF subclass must be further subclassed to define bg_key
-        must return 3-tuple: flow, direction, locale
+        OF subclass must be further subclassed to define emission_key
+        must return 4-tuple: flow, direction, locale, context
+        :return:
+        """
+        raise TypeError
+
+    @property
+    def context(self):
+        """
+        Return a context tuple.
+        This should get implemented for any class that implements emission_key
         :return:
         """
         raise TypeError
@@ -62,6 +71,11 @@ class ObservedFlow(object):
         raise NotImplemented
 
     def observe(self, parent):
+        """
+        A new observed flow must be "observed" from the perspective of an existing flow, which becomes the parent
+        :param parent:
+        :return:
+        """
         self._parent = parent
 
 
@@ -75,6 +89,9 @@ class ReferenceFlow(ObservedFlow):
         return 0.0
 
 
+'''
+Singleton for use in marking the reference flow of a fragment.
+'''
 RX = ReferenceFlow()
 
 
@@ -213,16 +230,20 @@ class Observer(object):
         self._key_lookup[oco.key] = (self._co, ix)
         self._Ac.append(oco)
 
-    def _add_emission(self, oco):
+    def _add_emission(self, oem):
         """
 
-        :param oco: the Observed Fragment Flow
+        :param oem: the Observed Emission.  Must have: key, context, cutoff_key, emission_key
         :return:
         """
-        print('Adding Emission')
-        ix = self._em.index(oco.emission_key)
-        self._key_lookup[oco.key] = (self._em, ix)
-        self._Bf.append(oco)
+        if oem.context is None or len(oem.context) == 0:
+            print('Emission with null context --> cutoff')
+            self._add_cutoff(oem, extra='emission with null context')
+        else:
+            print('Adding Emission')
+            ix = self._em.index(oem.emission_key)
+            self._key_lookup[oem.key] = (self._em, ix)
+            self._Bf.append(oem)
 
     @property
     def functional_unit(self):
@@ -244,10 +265,10 @@ class Observer(object):
                 for node, flow, dirn in self._bg.to_list()]
 
         d_iii = [EmissionFlow(flow.origin, flow['Name'], dirn, flow.unit(),
-                              context='; '.join(flow['Compartment']),
+                              context='; '.join(context),
                               location=locale,
                               external_ref=flow.external_ref)
-                 for flow, dirn, locale in self._em.to_list()]
+                 for flow, dirn, locale, context in self._em.to_list()]
 
         d_iv = []
         d_v = []
