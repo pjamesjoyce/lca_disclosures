@@ -54,6 +54,7 @@ class DisclosedFlow(object):
     """
     _direction = None
     _flow_type = None
+    index = NotImplemented
 
     def __init__(self, name, direction, unit, location=None, external_ref=None, **kwargs):
         """
@@ -153,13 +154,15 @@ class ForegroundFlow(DisclosedFlow):
     """
     _flow_type = 'foreground'
 
+    index = ('name', 'direction', 'unit', 'location', 'external_ref')
+
 
 class _SemanticFlow(DisclosedFlow):
     """
     A _SemanticFlow is a flow that corresponds to a single semantic reference, in other words a flow that signifies
     something with 'fixed' or recognized meaning on the Internet.  (e.g. JSON-LD) The characteristic of a semantic flow
     is its "origin", which is ultimately a URL prefix e.g.: 'https://magic-lca-data.vault.lc/ecoinvent/3.4/apos'
-    that specifies the originating data source. Currently supported is the origin given as a dot-separated hierarchical
+    that specifies the originating data source. Current practice is the origin given as a dot-separated hierarchical
     specifier, e.g. 'local.ecoinvent.3.4.apos.bw2'
 
     The concatenation of a flow's origin and its external_ref with a forward-slash '/' should specify a fully-qualified
@@ -228,6 +231,7 @@ class BackgroundFlow(_SemanticFlow):
     """
     _flow_type = 'background'
     _term_type = 'activity'
+    index = ('origin', 'name', 'direction', 'unit', 'activity', 'location', 'external_ref')
 
     def __init__(self, *args, activity=None, **kwargs):
         """
@@ -258,6 +262,7 @@ class EmissionFlow(_SemanticFlow):
     """
     _flow_type = 'emission'
     _term_type = 'context'
+    index = ('origin', 'name', 'direction', 'unit', 'context', 'location', 'external_ref')
 
     def __init__(self, *args, context=None, **kwargs):
         """

@@ -5,7 +5,7 @@ from scipy.sparse import coo_matrix, eye
 from scipy.sparse.linalg import spsolve
 from pandas import ExcelWriter
 
-from ..utils import data_to_coo, matrix_to_excel
+from ..utils import data_to_coo, matrix_to_excel, meta_to_excel
 
 
 class BaseDisclosure(object):
@@ -206,16 +206,20 @@ class BaseDisclosure(object):
         Ad = data_to_coo(data['Ad'])
         Bf = data_to_coo(data['Bf'])
 
+        meta_to_excel(xlw, sheetname='foreground', disclosed_flows=self.foreground_flows)
+        meta_to_excel(xlw, sheetname='background', disclosed_flows=self.background_flows)
+        meta_to_excel(xlw, sheetname='emissions', disclosed_flows=self.emission_flows)
+
         matrix_to_excel(xlw, sheetname='Af', matrix=Af.todense(), index=fg)
         matrix_to_excel(xlw, sheetname='Ad', matrix=Ad.todense(), index=bg)
         matrix_to_excel(xlw, sheetname='Bf', matrix=Bf.todense(), index=em)
 
         xt = self.x_tilde()
         ad = Ad * xt
-        matrix_to_excel(xlw, sheetname='ad', matrix=ad, index=bg)
+        matrix_to_excel(xlw, sheetname='ad_tilde', matrix=ad, index=bg)
 
         bf = Bf * xt
-        matrix_to_excel(xlw, sheetname='bf', matrix=bf, index=em)
+        matrix_to_excel(xlw, sheetname='bf_tilde', matrix=bf, index=em)
 
         xlw.save()
 

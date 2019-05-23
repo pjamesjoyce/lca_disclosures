@@ -1,5 +1,5 @@
 from scipy.sparse import coo_matrix
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 
 def matrix_to_data(m):
@@ -38,4 +38,14 @@ def data_to_coo(matrix):
 def matrix_to_excel(writer, sheetname, matrix, index=None, **kwargs):
     df = DataFrame(matrix, index=index, **kwargs)
     df[df == 0] = None
+    df.to_excel(writer, sheet_name=sheetname)
+
+
+def _flow_to_series(disclosed_flow):
+    return Series((getattr(disclosed_flow, k) for k in disclosed_flow.index),
+                  index=disclosed_flow.index)
+
+
+def meta_to_excel(writer, sheetname, disclosed_flows, **kwargs):
+    df = DataFrame((_flow_to_series(d) for d in disclosed_flows), **kwargs)
     df.to_excel(writer, sheet_name=sheetname)
