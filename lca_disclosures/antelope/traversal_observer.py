@@ -89,14 +89,6 @@ class ObservedExchange(ObservedFlow):
         else:
             return self._exch.termination
 
-    @property
-    def emission_key(self):
-        return self.flow, self.direction, self.locale, self.context
-
-    @property
-    def cutoff_key(self):
-        return tuple(self.emission_key[:3])
-
 
 class ObservedFragmentFlow(ObservedFlow):
     def __init__(self, ff, key):
@@ -173,7 +165,7 @@ class ObservedFragmentFlow(ObservedFlow):
 class ObservedBgFlow(ObservedFragmentFlow):
     @property
     def bg_key(self):
-        return self.ff.term.term_node, self.ff.term.term_flow, self.ff.direction
+        return self.ff.term.term_node, self.ff.term.term_flow, self.ff.term.direction
 
     def __str__(self):
         return 'ObservedBg(Parent: %s, Term: %s, Magnitude: %g)' % (self.parent.key, self.bg_key, self.magnitude)
@@ -191,15 +183,16 @@ class ObservedEmFlow(ObservedFragmentFlow):
     def context(self):
         return self.term.term_node
 
-    @property
-    def emission_key(self):
-        return self.flow, self.ff.fragment.direction, self.locale, self.context
-
     def __str__(self):
         return 'ObservedEm(Flow: %s, Context: %s, Magnitude: %g)' % (self.flow, self.context, self.magnitude)
 
 
 class ObservedCutoff(object):
+    """
+    Because of some complexities involving traversal- namely the "descend" switch and the accompanying need to indicate
+    exchanges with enclosed subfragments, cutoffs are a special class that does not inherit from ObservedFlow.  This
+    is probably a bad move and I may want to refactor this. (but I need TESTS first!)
+    """
     @classmethod
     def from_off(cls, off, negate=False):
         return cls(off.parent, off.flow, off.direction, off.ff.magnitude, negate=negate)
@@ -223,6 +216,13 @@ class ObservedCutoff(object):
         self.direction = direction
         self.magnitude = magnitude
         self.negate = negate
+
+    @property
+    def key(self):
+        if self.negate:
+            return tuple(self.parent.key + (self.flow.external_ref, 'negated'))
+        else:
+            return tuple(self.parent.key + (self.flow.external_ref,))
 
     @property
     def value(self):

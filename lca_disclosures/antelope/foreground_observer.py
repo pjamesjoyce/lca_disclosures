@@ -61,14 +61,6 @@ class ObservedEmissionFlow(ObservedForegroundFlow):
         else:
             return self._exch.termination
 
-    @property
-    def emission_key(self):
-        return self.flow, self.direction, self.locale, self.context
-
-    @property
-    def cutoff_key(self):
-        return tuple(self.emission_key[:3])
-
 
 class ForegroundObserver(Observer):
     def __init__(self, query, *refs):

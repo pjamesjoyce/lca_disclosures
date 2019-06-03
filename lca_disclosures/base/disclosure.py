@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 from scipy.sparse import coo_matrix, eye
 from scipy.sparse.linalg import spsolve
@@ -193,7 +194,8 @@ class BaseDisclosure(object):
     def write_excel(self, filename=None, folder_path=None):
         filename = self._spec_filename(filename=filename, folder_path=folder_path)
 
-        filename += '.xlsx'
+        if not filename.lower().endswith('xlsx'):
+            filename += '.xlsx'
 
         xlw = ExcelWriter(filename)
 

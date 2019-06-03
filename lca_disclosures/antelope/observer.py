@@ -5,7 +5,32 @@ class UnobservedFragmentFlow(Exception):
     pass
 
 
+class KeyCollision(Exception):
+    pass
+
+
 class ObservedFlow(object):
+    """
+    An ObservedFlow is an abstract class for an exchange that is observed to be part of some disclosure.
+
+    ObservedFlows have several properties that must be implemented in subclasses:
+     - parent --> the node in the graph from which the exchange is observed.
+     - flow --> the flow entity.  Assumed to have 'Name' property and unit() method
+     - direction --> relative to parent.
+     - locale --> where the observation occurred
+     - value --> the quantity of the exchange, relative to a unit activity of the parent
+
+    In addition, ObservedFlows have optional descriptive keys that are used depending on where the flow fits into the
+    disclosure:
+     - bg_key --> Background exchanges should return a 3-tuple of term_node, term_flow, direction (w.r.t. term node)
+     - context --> Emission exchanges should return a context tuple
+
+    The ObservedFlow implements some standard methods:
+     - observe(parent): assign the parent node to an observed flow (use the singleton RX to observe a reference flow).
+     - emission_key: flow, direction, locale, context
+     - cutoff_key: the first 3 of emission_key
+
+    """
     _parent = None
 
     @property
@@ -16,6 +41,10 @@ class ObservedFlow(object):
 
     @property
     def key(self):
+        """
+        Every observed flow needs a distinct key that enables it to be retrieved unambiguously.
+        :return:
+        """
         raise NotImplemented
 
     @property
@@ -28,24 +57,6 @@ class ObservedFlow(object):
         raise TypeError
 
     @property
-    def cutoff_key(self):
-        """
-        OF subclass must be further subclassed to define cutoff_key
-        must return 3-tuple: flow, direction, locale
-        :return:
-        """
-        raise TypeError
-
-    @property
-    def emission_key(self):
-        """
-        OF subclass must be further subclassed to define emission_key
-        must return 4-tuple: flow, direction, locale, context
-        :return:
-        """
-        raise TypeError
-
-    @property
     def context(self):
         """
         Return a context tuple.
@@ -53,6 +64,14 @@ class ObservedFlow(object):
         :return:
         """
         raise TypeError
+
+    @property
+    def emission_key(self):
+        return self.flow, self.direction, self.locale, self.context
+
+    @property
+    def cutoff_key(self):
+        return tuple(self.emission_key[:3])
 
     @property
     def flow(self):
@@ -122,6 +141,11 @@ class SeqList(object):
 
 
 class SeqDict(object):
+    """
+    Current theory is that this is basically just a SeqList-- operational difference seems to be, when we add to
+    _fg we __setitem__, which will throw a key error if the key already exists; whereas with the others we index(),
+    which adds if new, returns if existing.
+    """
     def __init__(self):
         self._l = []
         self._d = {}
@@ -180,6 +204,11 @@ class Observer(object):
         _map, _key = self._key_lookup[key]
         return _map[_key]
 
+    def __setitem__(self, key, value):
+        if key in self._key_lookup:
+            raise KeyCollision(key)
+        self._key_lookup[key] = value
+
     def _show_mtx(self, mtx):
         tag = {'Af': 'Foreground',
                'Ac': 'Cutoffs',
@@ -204,8 +233,8 @@ class Observer(object):
         :return:
         """
         print('Handling as FG')
-        self._fg[off.key] = off
-        self._key_lookup[off.key] = (self._fg, off.key)
+        self._fg[off.key] = off  # we __setitem__ for _fg
+        self[off.key] = (self._fg, off.key)
         self._Af.append(off)
 
     def _add_background(self, obg):
@@ -215,8 +244,8 @@ class Observer(object):
         :return:
         """
         print('Handling as BG')
-        ix = self._bg.index(obg.bg_key)
-        self._key_lookup[obg.key] = (self._bg, ix)
+        ix = self._bg.index(obg.bg_key)  # we index() for the other types
+        self[obg.key] = (self._bg, ix)
         self._Ad.append(obg)
 
     def _add_cutoff(self, oco, extra=''):
@@ -227,7 +256,7 @@ class Observer(object):
         """
         print('Adding Cutoff %s' % extra)
         ix = self._co.index(oco.cutoff_key)
-        self._key_lookup[oco.key] = (self._co, ix)
+        self[oco.key] = (self._co, ix)
         self._Ac.append(oco)
 
     def _add_emission(self, oem):
@@ -242,7 +271,7 @@ class Observer(object):
         else:
             print('Adding Emission')
             ix = self._em.index(oem.emission_key)
-            self._key_lookup[oem.key] = (self._em, ix)
+            self[oem.key] = (self._em, ix)
             self._Bf.append(oem)
 
     @property
@@ -255,7 +284,7 @@ class Observer(object):
 
         d_i = [ForegroundFlow(off.flow['Name'], off.direction, off.flow.unit(), location=off.locale)
                for off in self._fg.to_list()]  # this returns an ObservedForegroundFlow
-        d_i += [ForegroundFlow(flow['Name'], dirn, flow.unit(), location=locale)
+        d_i += [ForegroundFlow(flow['Name'], dirn, flow.unit(), location=locale, external_ref=flow.external_ref)
                 for flow, dirn, locale in self._co.to_list()]
 
         d_ii = [BackgroundFlow(node.origin, flow['Name'], dirn, flow.unit(),
