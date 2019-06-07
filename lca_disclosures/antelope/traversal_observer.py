@@ -43,10 +43,19 @@ class EmptyFragQueue(Exception):
     pass
 
 
+class DescentCollision(Exception):
+    pass
+
+
+'''
 class ProxyParent(object):
+    """
+    This is apparently unnecessary- given the bugfixes to handle _descend and _defer
+    """
     def __init__(self, off):
         self.fragment = off.term.term_node
         self.term = off.term
+'''
 
 
 class ObservedExchange(ObservedFlow):
@@ -110,13 +119,13 @@ class ObservedFragmentFlow(ObservedFlow):
 
     @property
     def value(self):
-        if self.parent is RX:
-            return self.ff.magnitude
+        if self.parent is RX or self.fragment.is_reference:
+            return self.magnitude
         return self.ff.node_weight / self.parent.magnitude
 
     @property
     def magnitude(self):
-        if self.parent is RX:
+        if self.parent is RX or self.fragment.is_reference:
             return self.ff.magnitude
         return self.ff.node_weight
 
@@ -138,6 +147,10 @@ class ObservedFragmentFlow(ObservedFlow):
             return self.ff.term.term_node['SpatialScope']
         except KeyError:
             return ''
+
+    @property
+    def external_ref(self):
+        return self.fragment.external_ref
 
     @property
     def term(self):
@@ -239,12 +252,20 @@ class ObservedCutoff(object):
     def cutoff_key(self):
         return self.flow, self.direction, self.parent.locale
 
+    @property
+    def external_ref(self):
+        return self.flow.external_ref
+
     def __repr__(self):
         return str(self)
 
     def __str__(self):
-        return 'ObservedCutoff(Parent: %s, %s: %s, Magnitude: %g)' % (self.parent.key, self.direction,
-                                                                      self.flow, self.magnitude)
+        if self.negate:
+            mag = '-%g [negated]' % self.magnitude
+        else:
+            mag = '%g' % self.magnitude
+        return 'ObservedCutoff(Parent: %s, %s: %s, Magnitude: %s)' % (self.parent.key, self.direction,
+                                                                      self.flow, mag)
 
 
 class TraversalObserver(Observer):
@@ -267,6 +288,7 @@ class TraversalObserver(Observer):
         self._ffqueue = deque(fragment_flows)  # once thru
 
         self._frags_seen = dict()  # maps to key of ffid
+        self._descend_targets = dict()  # maps descend fragment to its most recent parent
 
         self._deferred_frag_queue = deque()  # for non-descend subfragments, for later
 
@@ -301,9 +323,31 @@ class TraversalObserver(Observer):
         self._add_foreground(off)
         self._add_parent(off)
 
-    def _add_deferred_dependency(self, off, tgt):
+    '''
+    Subfragment handling
+    '''
+    def _descend(self, off):
         """
-        The off is the parent, the off.term.term_node is the term
+
+        :param off: the parent of a descend fragment
+        :return:
+        """
+        if off.ff.term.term_node in self._descend_targets:
+            raise DescentCollision(off)
+        self._descents.append(off.ffid)
+        self._descend_targets[off.ff.term.term_node] = off
+
+    def _defer(self, off):
+        """
+
+        :param off: the parent of a non-descend fragment-- gets handled after current traversal is finished
+        :return:
+        """
+        self._deferred_frag_queue.append(off)
+
+    def _add_subfrag_dependency(self, off, tgt):
+        """
+        The off is the parent, the off.term.term_node is the term fragment; tgt is the KEY of the term fragment
         :param off:
         :return:
         """
@@ -328,7 +372,7 @@ class TraversalObserver(Observer):
                 return False
 
             if deferred.term.term_node in self._frags_seen:
-                self._add_deferred_dependency(deferred, self._frags_seen[deferred.term.term_node])
+                self._add_subfrag_dependency(deferred, self._frags_seen[deferred.term.term_node])
             else:
                 # re-traversal is necessary to properly locate cutoffs
                 ffs = deferred.term.term_node.traverse(**deferred.ff.subfragment_params)
@@ -352,7 +396,7 @@ class TraversalObserver(Observer):
         new_off = ObservedFragmentFlow(self._ffs[ffid], self._make_key(ffid))
 
         if deferred:
-            self._add_deferred_dependency(deferred, new_off.key)
+            self._add_subfrag_dependency(deferred, new_off.key)
 
         return new_off
 
@@ -360,22 +404,25 @@ class TraversalObserver(Observer):
         try:
             off = self._get_next_fragment_flow()
         except EmptyFragQueue:
-            raise StopIteration
+            assert len(self._descend_targets) == 0
+            raise StopIteration  ## https://www.python.org/dev/peps/pep-0479/ does not apply because __next__ is iterator
         print(off.ff)
 
         if off.ff.magnitude == 0:
             print('Dropping zero-weighted node')
-            return
+            return self.next_ff()
 
         # new fragment--
         if off.ff.fragment.reference_entity is None:
             assert off.ff.fragment not in self._frags_seen
             off.observe(RX)
             self._frags_seen[off.ff.fragment] = off.key
-            # self._traverse_node(off)
+            if off.ff.fragment in self._descend_targets:
+                parent = self._descend_targets.pop(off.ff.fragment)
+                self._add_subfrag_dependency(parent, off.key)
 
         else:
-            # upon descent, we load up the descender and then the subfrag on the stack
+            # Pop back through parents until we find the current OFF's parent
             while off.ff.fragment.reference_entity is not self._current_parent.fragment:
                 try:
                     oldparent = self._pop_parent()
@@ -385,6 +432,7 @@ class TraversalObserver(Observer):
                     print(off.ff)
                     raise
 
+                # need this to detect when we've fallen off the end of a descended subfragment
                 if len(self._descents) > 0:
                     if self._ffs[self._descents[-1]].fragment is oldparent:
                         self._descents.pop()
@@ -397,7 +445,7 @@ class TraversalObserver(Observer):
                 if off.ff.term.is_null:
                     # drop cutoffs from nondescend subfrags because they get traversed later
                     print('Dropping enclosed cutoff')
-                    return
+                    return self.next_ff()  # go on to the next ff
                 # otherwise we need to "borrow" from their cutoffs to continue our current op
 
                 self._handle_term(off)  # off gets observed here
@@ -434,11 +482,11 @@ class TraversalObserver(Observer):
         else:
             self._traverse_node(off)  # make it the parent
             if off.ff.term.is_subfrag:
-                self._add_parent(ProxyParent(off))
+                # self._add_parent(ProxyParent(off))
                 if off.ff.term.descend:
-                    self._descents.append(off.ffid)
+                    self._descend(off)
                 else:
-                    self._deferred_frag_queue.append(off)
+                    self._defer(off)
             else:
                 # add unobserved exchanges--
                 for x in off.ff.term._unobserved_exchanges():

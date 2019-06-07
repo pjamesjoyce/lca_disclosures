@@ -32,6 +32,10 @@ class ObservedForegroundFlow(ObservedFlow):
     def locale(self):
         return self._locale
 
+    @property
+    def external_ref(self):
+        return self._exch.process.external_ref
+
     def __repr__(self):
         return '%s(Parent: %s, Term: %s: Value: %g)' % (self.__class__.__name__, self.parent.key,
                                                         self.key, self.value)

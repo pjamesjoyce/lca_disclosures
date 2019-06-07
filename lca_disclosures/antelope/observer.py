@@ -11,7 +11,10 @@ class KeyCollision(Exception):
 
 class ObservedFlow(object):
     """
-    An ObservedFlow is an abstract class for an exchange that is observed to be part of some disclosure.
+    An ObservedFlow is an abstract class for an exchange that is observed to be part of some disclosure.  An observed
+    flow has a KEY, which identifies it uniquely among all observed flows, and it has a PARENT, which is itself either
+    the singleton ReferenceFlow, RX, or an existing ObservedFlow from the disclosure foreground.  The parent indicates
+    the column to which the observation belongs, and the key indicates the row.
 
     ObservedFlows have several properties that must be implemented in subclasses:
      - parent --> the node in the graph from which the exchange is observed.
@@ -51,7 +54,7 @@ class ObservedFlow(object):
     def bg_key(self):
         """
         OF subclass must be further subclassed to define bg_key
-        must return 3-tuple: term_node, term_flow, direction
+        must return 3-tuple: term_node, term_flow, direction; all from the perspective of the referenced background
         :return:
         """
         raise TypeError
@@ -89,6 +92,14 @@ class ObservedFlow(object):
     def value(self):
         raise NotImplemented
 
+    @property
+    def external_ref(self):
+        """
+        This is only used for Foreground flows
+        :return:
+        """
+        raise NotImplemented
+
     def observe(self, parent):
         """
         A new observed flow must be "observed" from the perspective of an existing flow, which becomes the parent
@@ -105,7 +116,7 @@ class ReferenceFlow(ObservedFlow):
 
     @property
     def value(self):
-        return 0.0
+        return 1.0
 
 
 '''
@@ -282,7 +293,8 @@ class Observer(object):
         _ = [x for x in self]  # ensure fully iterated
         p = len(self._fg)
 
-        d_i = [ForegroundFlow(off.flow['Name'], off.direction, off.flow.unit(), location=off.locale)
+        d_i = [ForegroundFlow(off.flow['Name'], off.direction, off.flow.unit(), location=off.locale,
+                              external_ref='(%d) %s' % (self._fg.index(off.key), off.external_ref))
                for off in self._fg.to_list()]  # this returns an ObservedForegroundFlow
         d_i += [ForegroundFlow(flow['Name'], dirn, flow.unit(), location=locale, external_ref=flow.external_ref)
                 for flow, dirn, locale in self._co.to_list()]
