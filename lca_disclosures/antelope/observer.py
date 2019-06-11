@@ -294,7 +294,7 @@ class Observer(object):
         p = len(self._fg)
 
         d_i = [ForegroundFlow(off.flow['Name'], off.direction, off.flow.unit(), location=off.locale,
-                              external_ref='(%d) %s' % (self._fg.index(off.key), off.external_ref))
+                              external_ref=off.external_ref)
                for off in self._fg.to_list()]  # this returns an ObservedForegroundFlow
         d_i += [ForegroundFlow(flow['Name'], dirn, flow.unit(), location=locale, external_ref=flow.external_ref)
                 for flow, dirn, locale in self._co.to_list()]

@@ -334,6 +334,7 @@ class TraversalObserver(Observer):
         """
         if off.ff.term.term_node in self._descend_targets:
             raise DescentCollision(off)
+        print(' # descending %d' % off.ffid)
         self._descents.append(off.ffid)
         self._descend_targets[off.ff.term.term_node] = off
 
@@ -434,8 +435,9 @@ class TraversalObserver(Observer):
 
                 # need this to detect when we've fallen off the end of a descended subfragment
                 if len(self._descents) > 0:
-                    if self._ffs[self._descents[-1]].fragment is oldparent:
-                        self._descents.pop()
+                    if self._ffs[self._descents[-1]].fragment is oldparent.fragment:
+                        y = self._descents.pop()
+                        print(' # popped descent %d' % y)
 
             parent = self._current_parent  # last-seen fragment matching parent is ours!
 
