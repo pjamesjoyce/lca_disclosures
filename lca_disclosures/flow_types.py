@@ -153,8 +153,17 @@ class ForegroundFlow(DisclosedFlow):
     only locally defined.
     """
     _flow_type = 'foreground'
+    _cutoff = None
 
-    index = ('name', 'direction', 'unit', 'location', 'external_ref')
+    def set_cutoff(self):
+        self._cutoff = True
+
+    @property
+    def cutoff(self):
+        if self._cutoff:
+            return 'X'
+
+    index = ('name', 'direction', 'unit', 'cutoff', 'location', 'external_ref')
 
 
 class _SemanticFlow(DisclosedFlow):

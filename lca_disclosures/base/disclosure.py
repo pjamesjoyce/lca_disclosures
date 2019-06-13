@@ -6,7 +6,11 @@ from scipy.sparse import coo_matrix, eye
 from scipy.sparse.linalg import spsolve
 from pandas import ExcelWriter
 
-from ..utils import data_to_coo, matrix_to_excel, meta_to_excel
+from ..utils import data_to_coo, matrix_to_excel, meta_to_excel, matrix_to_table
+
+
+class LcaDisclosureError(Exception):
+    pass
 
 
 class BaseDisclosure(object):
@@ -14,11 +18,18 @@ class BaseDisclosure(object):
     _origin = None
     _folder_path = None
     _disclosure = None
+    _complete = False
 
     def __init__(self, folder_path=None, filename=None):
         self.folder_path = folder_path
         self.filename = filename
         self._disclosure = self._prepare_disclosure()
+        self._mark_cutoffs()
+        self._complete = True
+
+    @property
+    def complete(self):
+        return self._complete
 
     @property
     def folder_path(self):
@@ -100,17 +111,17 @@ class BaseDisclosure(object):
         b = coo_matrix(([1.0], ([0], [0])), shape=(p, 1))
         return spsolve(eye(p) - Af, b)
 
-    def _check_cutoff(self, k):
-        """
-
-        :param k: an index into foreground flows
-        :return: True if column k is empty across Af, Ad, and Bf; False otherwise
-        """
+    def _mark_cutoffs(self):
+        if self.complete:
+            return
+        fg = set(range(len(self.foreground_flows)))
         for matrix in (self.Af, self.Ad, self.Bf):
             for coords, val in matrix:
-                if coords[1] == k and val != 0:
-                    return False  # found a termination
-        return True
+                if coords[1] in fg and val != 0:
+                    # found a nonzero value: column is not a cutoff
+                    fg.remove(coords[1])
+        for f in fg:
+            self.foreground_flows[f].set_cutoff()
 
     @property
     def cutoffs(self):
@@ -119,8 +130,10 @@ class BaseDisclosure(object):
         of the foreground matrices and emissions that have no specified context)
         :return:
         """
-        for i, ff in enumerate(self.foreground_flows):
-            if self._check_cutoff(i):
+        if not self.complete:
+            raise LcaDisclosureError('Disclosure is not complete!')
+        for ff in self.foreground_flows:
+            if ff.cutoff:
                 yield ff
         for em in self.emission_flows:
             if em.context is None:  # Note this will throw an error until typed flows are implemented
@@ -191,7 +204,7 @@ class BaseDisclosure(object):
 
         return filename
 
-    def write_excel(self, filename=None, folder_path=None):
+    def write_excel(self, filename=None, folder_path=None, tabular=False):
         filename = self._spec_filename(filename=filename, folder_path=folder_path)
 
         if not filename.lower().endswith('xlsx'):
@@ -212,9 +225,14 @@ class BaseDisclosure(object):
         meta_to_excel(xlw, sheetname='background', disclosed_flows=self.background_flows)
         meta_to_excel(xlw, sheetname='emissions', disclosed_flows=self.emission_flows)
 
-        matrix_to_excel(xlw, sheetname='Af', matrix=Af.todense(), index=fg)
-        matrix_to_excel(xlw, sheetname='Ad', matrix=Ad.todense(), index=bg)
-        matrix_to_excel(xlw, sheetname='Bf', matrix=Bf.todense(), index=em)
+        if tabular:
+            matrix_to_table(xlw, sheetname='Af', matrix=Af, row='foreground')
+            matrix_to_table(xlw, sheetname='Ad', matrix=Ad, row='background')
+            matrix_to_table(xlw, sheetname='Bf', matrix=Bf, row='emission')
+        else:
+            matrix_to_excel(xlw, sheetname='Af', matrix=Af.todense(), index=fg)
+            matrix_to_excel(xlw, sheetname='Ad', matrix=Ad.todense(), index=bg)
+            matrix_to_excel(xlw, sheetname='Bf', matrix=Bf.todense(), index=em)
 
         xt = self.x_tilde()
         ad = Ad * xt

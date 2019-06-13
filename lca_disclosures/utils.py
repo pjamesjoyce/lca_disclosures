@@ -41,6 +41,14 @@ def matrix_to_excel(writer, sheetname, matrix, index=None, **kwargs):
     df.to_excel(writer, sheet_name=sheetname)
 
 
+def matrix_to_table(writer, sheetname, matrix, row=None, **kwargs):
+    r, c = matrix.nonzero()
+    v = matrix.data
+    rowname = 'row_%s' % row
+    df = DataFrame(((r[k], c[k], v[k]) for k in range(len(v))), columns=(rowname, 'col_foreground', 'value'), **kwargs)
+    df.to_excel(writer, sheet_name=sheetname, index=False)
+
+
 def _flow_to_series(disclosed_flow):
     return Series((getattr(disclosed_flow, k) for k in disclosed_flow.index),
                   index=disclosed_flow.index)
