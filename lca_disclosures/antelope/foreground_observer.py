@@ -67,8 +67,8 @@ class ObservedEmissionFlow(ObservedForegroundFlow):
 
 
 class ForegroundObserver(Observer):
-    def __init__(self, query, *refs):
-        super(ForegroundObserver, self).__init__()
+    def __init__(self, query, *refs, **kwargs):
+        super(ForegroundObserver, self).__init__(**kwargs)
 
         self._query = query
 
@@ -111,7 +111,7 @@ class ForegroundObserver(Observer):
 
         else:
             off = ObservedForegroundFlow(x, x.process.external_ref, x.process['SpatialScope'])
-            print('Adding rx %s' % off)
+            self._print('Adding rx %s' % off)
             off.observe(RX)
             self._add_foreground(off)
             self._add_foreground_deps_ems(off, off.key)

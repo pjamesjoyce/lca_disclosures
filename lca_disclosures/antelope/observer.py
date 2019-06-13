@@ -188,11 +188,13 @@ class SeqDict(object):
 
 
 class Observer(object):
-    def __init__(self):
+    def __init__(self, quiet=False):
         """
         These are really 'list-dicts' where they have a sequence but also a reverse-lookup capability.
         functionality tbd
         """
+        self._quiet = quiet
+
         self._fg = SeqDict()  # log the flow entities we encounter; map key to OFF
         self._co = SeqList()  # map index to (flow, direction)
         self._bg = SeqList()  # map index to (process_ref, term_flow)
@@ -204,6 +206,10 @@ class Observer(object):
         self._Bf = []  # list of emissions
 
         self._key_lookup = dict()  # map ff key to type-specific (map, key)
+
+    def _print(self, *args):
+        if not self._quiet:
+            print(*args)
 
     def __iter__(self):
         return self
@@ -243,7 +249,7 @@ class Observer(object):
         :param off: the observed fragment flow
         :return:
         """
-        print('Handling as FG')
+        self._print('Handling as FG')
         self._fg[off.key] = off  # we __setitem__ for _fg
         self[off.key] = (self._fg, off.key)
         self._Af.append(off)
@@ -254,7 +260,7 @@ class Observer(object):
         :param obg: an Observed background
         :return:
         """
-        print('Handling as BG')
+        self._print('Handling as BG')
         ix = self._bg.index(obg.bg_key)  # we index() for the other types
         self[obg.key] = (self._bg, ix)
         self._Ad.append(obg)
@@ -265,7 +271,7 @@ class Observer(object):
         :param oco: the Observed Cutoff
         :return:
         """
-        print('Adding Cutoff %s' % extra)
+        self._print('Adding Cutoff %s' % extra)
         ix = self._co.index(oco.cutoff_key)
         self[oco.key] = (self._co, ix)
         self._Ac.append(oco)
@@ -277,10 +283,10 @@ class Observer(object):
         :return:
         """
         if oem.context is None or len(oem.context) == 0:
-            print('Emission with null context --> cutoff')
+            self._print('Emission with null context --> cutoff')
             self._add_cutoff(oem, extra='emission with null context')
         else:
-            print('Adding Emission')
+            self._print('Adding Emission')
             ix = self._em.index(oem.emission_key)
             self[oem.key] = (self._em, ix)
             self._Bf.append(oem)

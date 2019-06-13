@@ -18,16 +18,16 @@ class _AntelopeDisclosure(BaseDisclosure):
 
 
 class AntelopeForegroundDisclosure(_AntelopeDisclosure):
-    def __init__(self, query, *args, **kwargs):
+    def __init__(self, query, *args, quiet=False, **kwargs):
 
-        self._observer = ForegroundObserver(query, *args)
+        self._observer = ForegroundObserver(query, *args, quiet=quiet)
 
         super(AntelopeForegroundDisclosure, self).__init__(**kwargs)
 
 
 class AntelopeTraversalDisclosure(_AntelopeDisclosure):
-    def __init__(self, ffs, **kwargs):
+    def __init__(self, ffs, quiet=False, **kwargs):
 
-        self._observer = TraversalObserver(ffs)
+        self._observer = TraversalObserver(ffs, quiet=quiet)
 
         super(AntelopeTraversalDisclosure, self).__init__(**kwargs)

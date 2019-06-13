@@ -273,7 +273,7 @@ class TraversalObserver(Observer):
     Take a sequence of fragmentflows and processes them into an Af, Ad, and Bf
     """
 
-    def __init__(self, fragment_flows, ):
+    def __init__(self, fragment_flows, **kwargs):
         """
         Each incoming fragment flow implies the existence of:
          - a distinct foreground flow (i.e. column of af) as the ff's parent - always known or None
@@ -283,7 +283,7 @@ class TraversalObserver(Observer):
         from that we create an observed fragment flow
         :param fragment_flows:
         """
-        super(TraversalObserver, self).__init__()
+        super(TraversalObserver, self).__init__(**kwargs)
 
         self._ffqueue = deque(fragment_flows)  # once thru
 
@@ -304,12 +304,12 @@ class TraversalObserver(Observer):
         return tuple(self._descents + [ffid])
 
     def _add_parent(self, parent):
-        print('Adding parent %s' % parent)
+        self._print('Adding parent %s' % parent)
         self._parents.append(parent)
 
     def _pop_parent(self):
         pop = self._parents.pop()
-        print('Popped parent %s' % pop)
+        self._print('Popped parent %s' % pop)
         return pop
 
     @property
@@ -334,7 +334,7 @@ class TraversalObserver(Observer):
         """
         if off.ff.term.term_node in self._descend_targets:
             raise DescentCollision(off)
-        print(' # descending %d' % off.ffid)
+        self._print(' # descending %d' % off.ffid)
         self._descents.append(off.ffid)
         self._descend_targets[off.ff.term.term_node] = off
 
@@ -407,10 +407,10 @@ class TraversalObserver(Observer):
         except EmptyFragQueue:
             assert len(self._descend_targets) == 0
             raise StopIteration  ## https://www.python.org/dev/peps/pep-0479/ does not apply because __next__ is iterator
-        print(off.ff)
+        self._print(off.ff)
 
         if off.ff.magnitude == 0:
-            print('Dropping zero-weighted node')
+            self._print('Dropping zero-weighted node')
             return self.next_ff()
 
         # new fragment--
@@ -437,7 +437,7 @@ class TraversalObserver(Observer):
                 if len(self._descents) > 0:
                     if self._ffs[self._descents[-1]].fragment is oldparent.fragment:
                         y = self._descents.pop()
-                        print(' # popped descent %d' % y)
+                        self._print(' # popped descent %d' % y)
 
             parent = self._current_parent  # last-seen fragment matching parent is ours!
 
@@ -446,7 +446,7 @@ class TraversalObserver(Observer):
             if parent.term.is_subfrag and not parent.term.descend:
                 if off.ff.term.is_null:
                     # drop cutoffs from nondescend subfrags because they get traversed later
-                    print('Dropping enclosed cutoff')
+                    self._print('Dropping enclosed cutoff')
                     return self.next_ff()  # go on to the next ff
                 # otherwise we need to "borrow" from their cutoffs to continue our current op
 
